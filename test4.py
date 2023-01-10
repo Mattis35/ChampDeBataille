@@ -1,18 +1,31 @@
 import tkinter as tk
 
-def on_ok_button_click():
-    name = entry.get()
-    print(name)
-
 fenetre = tk.Tk()
+fenetre.geometry("1600x1000")  # Taille de la fenêtre
+fenetre.configure(bg='#c0c0c0')
 
-label = tk.Label(fenetre, text="Quel est votre nom?")
-label.pack()
+canvas = tk.Canvas(fenetre, width=1600, height=1000)
+canvas.grid()
+canvas.configure(bg='#c0c0c0')  # Couleur gris clair
 
-entry = tk.Entry(fenetre)
-entry.pack()
+canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)
+canvas_combat.configure(bg='#c0c0c0')
+canvas_combat.grid_remove()
 
-ok_button = tk.Button(fenetre, text="OK", command=on_ok_button_click)
-ok_button.pack()
+image = tk.PhotoImage(file="Images/Murloc_1.png")
+
+combat = canvas_combat.create_image(235, 720, anchor=tk.NW, image=image)
+
+
+
+canvas.grid_remove()
+canvas_combat.grid()
+
+
+def show_main():
+    canvas_combat.grid_remove()
+    canvas.grid()
+
+
 
 fenetre.mainloop()

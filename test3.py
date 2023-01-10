@@ -11,27 +11,32 @@ fenetre.configure(bg='#c0c0c0')
 canvas = tk.Canvas(fenetre, width=1600, height=1000)
 canvas.pack()
 canvas.configure(bg='#c0c0c0')      # Couleur gris clair
+canvas.grid()
 
+canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)
+canvas_combat.configure(bg='#c0c0c0')
 
 
 # Création des bordures d'images pour les interfaces :
-border_joueur_waiting_0 = canvas.create_rectangle(25, 720, 25 + 167, 720 + 260, outline='blue', width=5)
-border_joueur_waiting_1 = canvas.create_rectangle(235, 720, 235 + 167, 720 + 260, outline='blue', width=5)
-border_joueur_waiting_2 = canvas.create_rectangle(445, 720, 445 + 167, 720 + 260, outline='blue', width=5)
-border_joueur_waiting_3 = canvas.create_rectangle(655, 720, 655 + 167, 720 + 260, outline='blue', width=5)
-border_joueur_waiting_4 = canvas.create_rectangle(865, 720, 865 + 167, 720 + 260, outline='blue', width=5)
-border_joueur_waiting_5 = canvas.create_rectangle(1075, 720, 1075 + 167, 720 + 260, outline='blue', width=5)
+border_joueur_waiting_0 = canvas.create_rectangle(25, 720, 25 + 167, 720 + 260, outline='black', width=5)
+border_joueur_waiting_1 = canvas.create_rectangle(235, 720, 235 + 167, 720 + 260, outline='black', width=5)
+border_joueur_waiting_2 = canvas.create_rectangle(445, 720, 445 + 167, 720 + 260, outline='black', width=5)
+border_joueur_waiting_3 = canvas.create_rectangle(655, 720, 655 + 167, 720 + 260, outline='black', width=5)
+border_joueur_waiting_4 = canvas.create_rectangle(865, 720, 865 + 167, 720 + 260, outline='black', width=5)
+border_joueur_waiting_5 = canvas.create_rectangle(1075, 720, 1075 + 167, 720 + 260, outline='black', width=5)
 
-border_battler_on_field_0 = canvas.create_rectangle(235, 420, 235 + 167, 420 + 260, outline='blue', width=5)
-border_battler_on_field_1 = canvas.create_rectangle(445, 420, 445 + 167, 420 + 260, outline='blue', width=5)
-border_battler_on_field_2 = canvas.create_rectangle(655, 420, 655 + 167, 420 + 260, outline='blue', width=5)
-border_battler_on_field_3 = canvas.create_rectangle(865, 420, 865 + 167, 420 + 260, outline='blue', width=5)
+border_battler_on_field_0 = canvas.create_rectangle(235, 420, 235 + 167, 420 + 260, outline='black', width=5)
+border_battler_on_field_1 = canvas.create_rectangle(445, 420, 445 + 167, 420 + 260, outline='black', width=5)
+border_battler_on_field_2 = canvas.create_rectangle(655, 420, 655 + 167, 420 + 260, outline='black', width=5)
+border_battler_on_field_3 = canvas.create_rectangle(865, 420, 865 + 167, 420 + 260, outline='black', width=5)
 
-border_taverne0 = canvas.create_rectangle(235, 100, 235 + 167, 100 + 260, outline='blue', width=5)
-border_taverne1 = canvas.create_rectangle(445, 100, 445 + 167, 100 + 260, outline='blue', width=5)
-border_taverne2 = canvas.create_rectangle(655, 100, 655 + 167, 100 + 260, outline='blue', width=5)
+border_taverne0 = canvas.create_rectangle(235, 100, 235 + 167, 100 + 260, outline='black', width=5)
+border_taverne1 = canvas.create_rectangle(445, 100, 445 + 167, 100 + 260, outline='black', width=5)
+border_taverne2 = canvas.create_rectangle(655, 100, 655 + 167, 100 + 260, outline='black', width=5)
 
-border_vendre_serviteur = canvas.create_rectangle(960, 180, 1100, 240, outline='blue', width=5)
+border_rafraichir_taverne = canvas.create_rectangle(960, 180, 1100, 240, outline='black', width=5)
+border_vendre_serviteur = canvas.create_rectangle(1380, 420, 1380 + 167, 420 + 260, outline='black', width=5)
+border_combat = canvas.create_rectangle(1350, 910, 1550, 990, outline='black', width=5)
 
 border_board_liste = [border_joueur_waiting_0, border_joueur_waiting_1, border_joueur_waiting_2, border_joueur_waiting_3, border_joueur_waiting_4, border_joueur_waiting_5]
 border_taverne_liste = [border_taverne0 , border_taverne1 , border_taverne2]
@@ -42,7 +47,7 @@ class Player:
         self.nom = nom
         self.hp = 20
         self.gold = 100
-        self.taverne_tier = 1
+        self.taverne_tier = 3
 
 
 
@@ -81,18 +86,38 @@ class Murloc_type_2(Serviteur):
     def __init__(self, id_serviteur):
         super().__init__(id_serviteur)
         self.nom = "Murloc acrobate"
-        self.pv = 5
-        self.atq = 3
+        self.pv = 3
+        self.atq = 1
         self.tier = 1
         self.tribe = "Murloc"
         self.image = tk.PhotoImage(file="Images/Murloc_2.png")
+
+class Murloc_type_3(Serviteur):
+    def __init__(self, id_serviteur):
+        super().__init__(id_serviteur)
+        self.nom = "Murloc ecuyer"
+        self.pv = 4
+        self.atq = 4
+        self.tier = 2
+        self.tribe = "Murloc"
+        self.image = tk.PhotoImage(file="Images/Murloc_3.png")
+
+class Murloc_type_4(Serviteur):
+    def __init__(self, id_serviteur):
+        super().__init__(id_serviteur)
+        self.nom = "Le sage vert"
+        self.pv = 6
+        self.atq = 6
+        self.tier = 3
+        self.tribe = "Murloc"
+        self.image = tk.PhotoImage(file="Images/Murloc_4.png")
 
 class Paladin_type_1(Serviteur):
     def __init__(self, id_serviteur):
         super().__init__(id_serviteur)
         self.nom = "Guerrier sacré"
-        self.pv = 5
-        self.atq = 3
+        self.pv = 3
+        self.atq = 1
         self.tier = 1
         self.tribe = "Paladin"
         self.image = tk.PhotoImage(file="Images/Paladin_1.png")
@@ -101,19 +126,20 @@ class Bete_type_1(Serviteur):
     def __init__(self, id_serviteur):
         super().__init__(id_serviteur)
         self.nom = "La bete sanguinaire"
-        self.pv = 5
-        self.atq = 3
+        self.pv = 4
+        self.atq = 2
         self.tier = 1
         self.tribe = "Bete"
         self.image = tk.PhotoImage(file="Images/Bete_1.png")
 
 
 Liste_cartes_tier1 = [Murloc_type_1, Murloc_type_2, Paladin_type_1, Bete_type_1]
-Liste_cartes_tier2 = Liste_cartes_tier1 + []
+Liste_cartes_tier2 = Liste_cartes_tier1 + [Murloc_type_3]
+Liste_cartes_tier3 = Liste_cartes_tier2 + [Murloc_type_4]
 
-Liste_tier = [Liste_cartes_tier1 , Liste_cartes_tier2]
+Liste_tier = [Liste_cartes_tier1 , Liste_cartes_tier2, Liste_cartes_tier3]
 
-Liste_serviteurs = []
+Liste_serviteurs = []       #Liste vide pour le moment, chaque fois que l'on crée un serviteur, on le rajoutera à cette liste.
 
 colors_taverne = [0,0,0]
 colors_board = [0,0,0,0,0,0]
@@ -121,7 +147,7 @@ colors_terrain = [0,0,0,0]
 
 image_void = tk.PhotoImage(file="Images/void.png")
 
-image_taverne = [image_void, image_void, image_void]
+image_taverne = [image_void, image_void, image_void]    #Image taverne stock les objets de type image que l'on crée afin de pouvoir afficher les images.
 emplacement_taverne_libre = [0,0,0]    # 0 correspond à une place libre, on met le nom du serviteur si la place est occupée
 image_board = [image_void, image_void, image_void, image_void, image_void, image_void]
 emplacement_board_libre = [0,0,0,0,0,0]
@@ -144,17 +170,27 @@ Message_terrain1.place(x = 20, y = 480)
 Message_terrain2.place(x = 50, y = 505)
 Message_terrain_fleche.place(x = 100, y = 535)
 
+Message_vente1 = tk.Label(fenetre, text="Vendez ici vos serviteurs", font=("Calibri", 14), fg="black", bg='#c0c0c0')
+Message_vente2 = tk.Label(fenetre, text="pour recuperer 1 gold", font=("Calibri", 14), fg="black", bg='#c0c0c0')
+Message_vente_fleche = tk.Label(fenetre, text="--->", font=("Calibri", 14), fg="black", bg='#c0c0c0')
+Message_vente1.place(x = 1140, y = 480)
+Message_vente2.place(x = 1150, y = 505)
+Message_vente_fleche.place(x = 1220, y = 535)
+
 Message_board1 = tk.Label(fenetre, text="Placez ici les serviteurs", font=("Calibri", 14), fg="black", bg='#c0c0c0')
 Message_board2 = tk.Label(fenetre, text="que vous achetez", font=("Calibri", 14), fg="black", bg='#c0c0c0')
 Message_board_fleche = tk.Label(fenetre, text="<---", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_board1.place(x = 1300, y = 780)
-Message_board2.place(x = 1320, y = 805)
-Message_board_fleche.place(x = 1372, y = 835)
+Message_board1.place(x = 1270, y = 740)
+Message_board2.place(x = 1290, y = 765)
+Message_board_fleche.place(x = 1342, y = 793)
 
 message_rafraichir = tk.Label(fenetre, text="Refresh tavern", font=("Calibri", 14), fg="black", bg='#c0c0c0')
 message_rafraichir.place(x = 972, y = 250)
 message_rafraichir_cout = tk.Label(fenetre, text="cost : 1 gold", font=("Calibri", 13), fg="black", bg='#c0c0c0')
 message_rafraichir_cout.place(x = 980, y = 275)
+
+message_combat = tk.Label(fenetre, text="COMBAT", font=("Calibri", 15), fg="black", bg='#c0c0c0')
+message_combat.place(x = 1405, y = 870)
 
 #Paramètres du joueur
 Joueur = Player("M. Vilela Monteiro")
@@ -222,6 +258,12 @@ def on_mouse_click(event):
     #Pour rafraichir la taverne :
     if 960 < rel_x < 1100 and 180 < rel_y < 240:
         refresh_taverne(Joueur)
+    #Pour vendre un serviteur :
+    if 1380 < rel_x < 1547 and 420 < rel_y < 680:
+        vendre_serviteur()
+    #Pour lancer le combat :
+    if 1350 < rel_x < 1550 and 910 < rel_y < 990:
+        lancer_combat()
 
 def clic_sur_taverne(colors_index):
     global colors_taverne
@@ -232,7 +274,7 @@ def clic_sur_taverne(colors_index):
         colors_taverne[colors_index] = 0
     for i in range (3):
         if colors_taverne[i] == 0:
-            canvas.itemconfigure(border_taverne_liste[i], outline='blue')
+            canvas.itemconfigure(border_taverne_liste[i], outline='black')
         if colors_taverne[i] == 1:
             canvas.itemconfigure(border_taverne_liste[i], outline='red')
 
@@ -241,11 +283,12 @@ def clic_sur_board_vide(x,y, indice_board):
     for indice_taverne in range(3):
         if colors_taverne[indice_taverne] == 1:
             if Joueur.gold >= 3:
+                canvas.delete(image_board[indice_board])
                 canvas.coords(image_taverne[indice_taverne], x, y)
                 image_board[indice_board] = image_taverne[indice_taverne]
                 image_taverne[indice_taverne] = canvas.create_image(235 + indice_taverne*210, 100, anchor=tk.NW, image=image_void)
                 colors_taverne[indice_taverne] = 0
-                canvas.itemconfigure(border_taverne_liste[indice_taverne], outline='blue')
+                canvas.itemconfigure(border_taverne_liste[indice_taverne], outline='black')
                 emplacement_board_libre[indice_board] = emplacement_taverne_libre[indice_taverne]
                 emplacement_taverne_libre[indice_taverne] = 0
                 colors_board[indice_board] = 1 #Il est necessaire de changer la couleur de la bordure vu l'ordre des évènements
@@ -258,11 +301,12 @@ def poser_un_serviteur(x,y, indice_terrain):
     global colors_board, emplacement_board_libre, colors_terrain
     for indice_board in range(6):
         if colors_board[indice_board] == 1:
+            canvas.delete(image_terrain[indice_terrain])
             canvas.coords(image_board[indice_board], x, y)
             image_terrain[indice_terrain] = image_board[indice_board]
             image_board[indice_board] = canvas.create_image(25 + indice_board*210, 720, anchor=tk.NW, image=image_void)
             colors_board[indice_board] = 0
-            canvas.itemconfigure(border_board_liste[indice_board], outline='blue')
+            canvas.itemconfigure(border_board_liste[indice_board], outline='black')
             emplacement_terrain_libre[indice_terrain] = emplacement_board_libre[indice_board]
             emplacement_board_libre[indice_board] = 0
             colors_terrain[indice_terrain] = 1
@@ -278,10 +322,22 @@ def clic_sur_board_occupe(colors_index):
         colors_board[colors_index] = 0
     for i in range (6):
         if colors_board[i] == 0:
-            canvas.itemconfigure(border_board_liste[i], outline='blue')
+            canvas.itemconfigure(border_board_liste[i], outline='black')
         if colors_board[i] == 1:
             canvas.itemconfigure(border_board_liste[i], outline='red')
 
+def clic_sur_terrain_occupe(colors_index):
+    global colors_terrain, colors_board
+    if colors_board[colors_index] == 0:
+        colors_board = [0,0,0,0,0,0]
+        colors_board[colors_index] = 1
+    else:
+        colors_board[colors_index] = 0
+    for i in range (6):
+        if colors_board[i] == 0:
+            canvas.itemconfigure(border_board_liste[i], outline='black')
+        if colors_board[i] == 1:
+            canvas.itemconfigure(border_board_liste[i], outline='red')
 
 
 def remplissage_taverne(tier):
@@ -300,6 +356,10 @@ def remplissage_taverne(tier):
             Liste_serviteurs[id_serviteur] = Paladin_type_1(id_serviteur)
         if nb_aléatoire == 3:
             Liste_serviteurs[id_serviteur] = Bete_type_1(id_serviteur)
+        if nb_aléatoire == 4:
+            Liste_serviteurs[id_serviteur] = Murloc_type_3(id_serviteur)
+        if nb_aléatoire == 5:
+            Liste_serviteurs[id_serviteur] = Murloc_type_4(id_serviteur)
 
         image_taverne[i] = canvas.create_image(235 + i*210, 100, anchor=tk.NW, image=Liste_serviteurs[id_serviteur].image)
         emplacement_taverne_libre[i] = Liste_serviteurs[id_serviteur]
@@ -363,10 +423,51 @@ def mise_a_jour_systeme_taverne():
 
 def refresh_taverne(Joueur):
     if Joueur.gold >= 1:
+        for i in range(3):
+            canvas.delete(image_taverne[i])
         Joueur.gold = Joueur.gold - 1
         remplissage_taverne(Joueur.taverne_tier)
 
 
+def vendre_serviteur():
+    global Joueur, image_board, colors_board
+    for i in range(6):
+        if colors_board[i] == 1:
+            colors_board[i] = 0
+            image_board[i] = canvas.create_image(25 + i*210, 720, anchor=tk.NW, image=image_void)
+            canvas.itemconfigure(border_board_liste[i], outline='black')
+            emplacement_board_libre[i] = 0
+            Joueur.gold += 1
+    mise_a_jour_systeme_taverne()
+
+def lancer_combat():
+    global emplacement_terrain_libre
+    image_combat = [0, 0, 0, 0]
+    label_combat_liste = [0,0,0,0,0,0,0,0]
+    liste_opposants = [0,0,0,0]
+    image_opposant = [0,0,0,0]
+    label_opposant_liste = [0,0,0,0,0,0,0,0]
+    canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)
+    canvas_combat.configure(bg='#c0c0c0')
+    canvas.grid_remove()
+    canvas_combat.grid()
+    for i in range(4):
+        if emplacement_terrain_libre[i] != 0:
+            image_combat[i] = canvas_combat.create_image(235 + i * 210, 720, anchor=tk.NW, image=emplacement_terrain_libre[i].image)
+            label_combat_liste[i] = tk.Label(fenetre, text=emplacement_terrain_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
+            label_combat_liste[i].place(x=260 + i * 210, y=886)
+            label_combat_liste[i + 3] = tk.Label(fenetre, text=emplacement_terrain_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
+            label_combat_liste[i + 3].place(x=365 + i * 210, y=886)
+        if emplacement_terrain_libre[i] == 0:
+            image_combat[i] = canvas_combat.create_image(235 + i * 210, 720, anchor=tk.NW, image=image_void)
+
+    for i in range(4):
+        liste_opposants[i] = Murloc_type_4(i+1000)
+        image_opposant[i] = canvas_combat.create_image(235 + i * 210, 120, anchor=tk.NW, image="Images/Murloc_4.png")
+        label_opposant_liste[i] = tk.Label(fenetre, text=liste_opposants[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
+        label_opposant_liste[i].place(x=260 + i * 210, y=286)
+        label_opposant_liste[i + 3] = tk.Label(fenetre, text=liste_opposants[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
+        label_opposant_liste[i + 3].place(x=365 + i * 210, y=286)
 
 
 

@@ -1,5 +1,6 @@
 import tkinter as tk
 import random as rd
+import time
 
 
 #Création des fenetres
@@ -48,6 +49,7 @@ class Player:
         self.hp = 20
         self.gold = 100
         self.taverne_tier = 3
+        self.serviteurs_au_combat = [0,0,0,0]
 
 
 
@@ -194,6 +196,7 @@ message_combat.place(x = 1405, y = 870)
 
 #Paramètres du joueur
 Joueur = Player("M. Vilela Monteiro")
+Adversaire = Player("Ennemy")
 nom_joueur = tk.Label(fenetre, text=" " +Joueur.nom+ " ", font=("Calibri", 20), fg="red", bg='#c0c0c0', relief='solid',bd=2)
 nom_joueur.place(x=1300, y=100)
 gold_joueur_message = tk.Label(fenetre, text="Your gold :", font=("Calibri", 18), fg="black", bg='#c0c0c0')
@@ -263,7 +266,9 @@ def on_mouse_click(event):
         vendre_serviteur()
     #Pour lancer le combat :
     if 1350 < rel_x < 1550 and 910 < rel_y < 990:
-        lancer_combat()
+        préparation_combat(Joueur, Adversaire)
+        #fenetre.mainloop()
+        Lancer_combat(Joueur,Adversaire)
 
 def clic_sur_taverne(colors_index):
     global colors_taverne
@@ -440,11 +445,50 @@ def vendre_serviteur():
             Joueur.gold += 1
     mise_a_jour_systeme_taverne()
 
-def lancer_combat():
-    global emplacement_terrain_libre
+
+#Création des 4 adversaires :
+liste_opposants = [0,0,0,0]
+for i in range(4):
+    liste_opposants[i] = Murloc_type_4(i+1000)
+
+
+def Bataille2(p1,p2, p1_next_battler, p2_next_battler):
+    while (p1.serviteurs_au_combat[p1_next_battler] == 0):      # Boucle pour trouver un serviteur du joueur 1
+        p1_next_battler += 1
+        if (p1_next_battler == 4):
+            p1_next_battler = 0
+
+    target = rd.randint(0, 3)
+    while (p2.serviteurs_au_combat[target] == 0):           # Boucle pour trouver une cible : un serviteur du joueur 2
+        target = rd.randint(0, 3)
+
+    a = p1.serviteurs_au_combat[p1_next_battler].attaquer(p2.serviteurs_au_combat[target])      # a permet de déterminer quels serviteurs sont morts
+    if (a == 1 or a == 3):
+        p1.serviteurs_au_combat[p1_next_battler] = 0
+    if (a == 2 or a == 3):
+        p2.serviteurs_au_combat[p1_next_battler] = 0
+    p1_next_battler += 1
+    time.sleep(1)
+
+def Lancer_combat(p1,p2):
+    next_attacker = rd.randint(1,2)     #Défini si c'est le joueur 1 qui commence à attaquer ou si c'est le 2ème. De plus, cette variable sera mise à jour à chaque attaque.
+    p1_next_battler = 0
+    p2_next_battler = 0
+    while (p1.serviteurs_au_combat != [0,0,0,0] and p2.serviteurs_au_combat != [0,0,0,0]):
+        print(p1.serviteurs_au_combat)
+        print(p2.serviteurs_au_combat)
+        if (next_attacker == 1):
+            Bataille2(p1,p2, p1_next_battler, p2_next_battler)
+            next_attacker = 2
+        else :
+            Bataille2(p2,p1, p2_next_battler, p1_next_battler)
+            next_attacker = 1
+    print("fin du combat")
+
+def préparation_combat(p1,p2):
+    global emplacement_terrain_libre, liste_opposants
     image_combat = [0, 0, 0, 0]
     label_combat_liste = [0,0,0,0,0,0,0,0]
-    liste_opposants = [0,0,0,0]
     image_opposant = [0,0,0,0]
     label_opposant_liste = [0,0,0,0,0,0,0,0]
     canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)
@@ -453,22 +497,24 @@ def lancer_combat():
     canvas_combat.grid()
     for i in range(4):
         if emplacement_terrain_libre[i] != 0:
-            image_combat[i] = canvas_combat.create_image(235 + i * 210, 720, anchor=tk.NW, image=emplacement_terrain_libre[i].image)
+            image_combat[i] = canvas_combat.create_image(235 + i * 210, 700, anchor=tk.NW, image=emplacement_terrain_libre[i].image)
             label_combat_liste[i] = tk.Label(fenetre, text=emplacement_terrain_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_combat_liste[i].place(x=260 + i * 210, y=886)
+            label_combat_liste[i].place(x=260 + i * 210, y=866)
             label_combat_liste[i + 3] = tk.Label(fenetre, text=emplacement_terrain_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_combat_liste[i + 3].place(x=365 + i * 210, y=886)
+            label_combat_liste[i + 3].place(x=365 + i * 210, y=866)
         if emplacement_terrain_libre[i] == 0:
-            image_combat[i] = canvas_combat.create_image(235 + i * 210, 720, anchor=tk.NW, image=image_void)
+            image_combat[i] = canvas_combat.create_image(235 + i * 210, 700, anchor=tk.NW, image=image_void)
 
-    for i in range(4):
-        liste_opposants[i] = Murloc_type_4(i+1000)
-        image_opposant[i] = canvas_combat.create_image(235 + i * 210, 120, anchor=tk.NW, image="Images/Murloc_4.png")
+        #Affichage des adversaires :
+        image_opposant[i] = canvas_combat.create_image(235 + i * 210, 120, anchor=tk.NW, image=liste_opposants[i].image)
         label_opposant_liste[i] = tk.Label(fenetre, text=liste_opposants[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
         label_opposant_liste[i].place(x=260 + i * 210, y=286)
         label_opposant_liste[i + 3] = tk.Label(fenetre, text=liste_opposants[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
         label_opposant_liste[i + 3].place(x=365 + i * 210, y=286)
 
+    #Copie des unités
+    p1.serviteurs_au_combat = emplacement_terrain_libre
+    p2.serviteurs_au_combat = liste_opposants
 
 
 
@@ -487,5 +533,6 @@ remplissage_taverne(1)
 
 fenetre.bind("<Button-1>", on_mouse_click)
 fenetre.mainloop()
+
 
 

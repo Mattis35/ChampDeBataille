@@ -114,7 +114,7 @@ image_board = [image_void, image_void, image_void, image_void, image_void, image
 
 def initialisation_board():
     for i in range (6):
-        image_board[i] = canvas.create_image(25 + 210*i, 720, anchor=tk.NW, image=image_void)
+        image_board[i] = canvas.create_image(25 + 210 * i, 720, anchor=tk.NW, image=image_void)
 
 def remplissage_taverne(tier):
     nb_cartes = len(Liste_tier[tier-1])

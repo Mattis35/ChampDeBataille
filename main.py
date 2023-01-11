@@ -50,6 +50,7 @@ class Player:
         self.gold = 100
         self.taverne_tier = 3
         self.serviteurs_au_combat = [0,0,0,0]
+        self.next_battler = 0      #Utile en combat
 
 
 
@@ -208,7 +209,12 @@ tier_joueur_message.place(x=1300, y=160)
 tier_joueur = tk.Label(fenetre, text=Joueur.taverne_tier, font=("Calibri", 18), fg="black", bg='#c0c0c0')
 tier_joueur.place(x=1480, y=160)
 
+lieu = "taverne"    #Permet de savoir ou l'on se situe, lieu vaut "taverne" si on est dans la taverne et "combat" si on est au combat
+
+
 def on_mouse_click(event):
+    global lieu
+
     # Récupérer les coordonnées absolues de la souris
     abs_x, abs_y = event.widget.winfo_pointerxy()
     # Récupérer les coordonnées de la fenêtre Tkinter (obligatoire pour déplacer la fenêtre
@@ -216,59 +222,63 @@ def on_mouse_click(event):
     # Calculer les coordonnées relatives à la fenêtre Tkinter
     rel_x, rel_y = abs_x - fenetre_x, abs_y - fenetre_y
 
-    #Pour changer la couleur du rectangle autour des cartes de la taverne
-    if 235 < rel_x < 235 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[0] != 0:
-        clic_sur_taverne(0)
-    if 445 < rel_x < 445 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[1] != 0:
-        clic_sur_taverne(1)
-    if 655 < rel_x < 655 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[2] != 0:
-        clic_sur_taverne(2)
-    #Pour le déplacement d'une carte de la taverne vers la main du joueur
-    if 25 < rel_x < 25 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[0] == 0:
-        clic_sur_board_vide(25, 720, 0)
-    if 235 < rel_x < 235 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[1] == 0:
-        clic_sur_board_vide(235, 720, 1)
-    if 445 < rel_x < 445 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[2] == 0:
-        clic_sur_board_vide(445, 720, 2)
-    if 655 < rel_x < 655 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[3] == 0:
-        clic_sur_board_vide(655, 720, 3)
-    if 865 < rel_x < 865 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[4] == 0:
-        clic_sur_board_vide(865, 720, 4)
-    if 1075 < rel_x < 1075 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[5] == 0:
-        clic_sur_board_vide(1075, 720, 5)
-    #Pour changer la couleur du rectangle autour des cartes du board
-    if 25 < rel_x < 25 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[0] != 0:
-        clic_sur_board_occupe(0)
-    if 235 < rel_x < 235 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[1] != 0:
-        clic_sur_board_occupe(1)
-    if 445 < rel_x < 445 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[2] != 0:
-        clic_sur_board_occupe(2)
-    if 655 < rel_x < 655 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[3] != 0:
-        clic_sur_board_occupe(3)
-    if 865 < rel_x < 865 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[4] != 0:
-        clic_sur_board_occupe(4)
-    if 1075 < rel_x < 1075 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[5] != 0:
-        clic_sur_board_occupe(5)
-    #Pour le déplacement d'une carte de la main du joueur vers le terrain
-    if 235 < rel_x < 235 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[0] == 0:
-        poser_un_serviteur(235, 420, 0)
-    if 445 < rel_x < 445 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[1] == 0:
-        poser_un_serviteur(445, 420, 1)
-    if 655 < rel_x < 655 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[2] == 0:
-        poser_un_serviteur(655, 420, 2)
-    if 865 < rel_x < 865 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[3] == 0:
-        poser_un_serviteur(865, 420, 3)
-    #Pour rafraichir la taverne :
-    if 960 < rel_x < 1100 and 180 < rel_y < 240:
-        refresh_taverne(Joueur)
-    #Pour vendre un serviteur :
-    if 1380 < rel_x < 1547 and 420 < rel_y < 680:
-        vendre_serviteur()
-    #Pour lancer le combat :
-    if 1350 < rel_x < 1550 and 910 < rel_y < 990:
-        préparation_combat(Joueur, Adversaire)
-        #fenetre.mainloop()
-        Lancer_combat(Joueur,Adversaire)
+    if lieu == "taverne":
+        #Pour changer la couleur du rectangle autour des cartes de la taverne
+        if 235 < rel_x < 235 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[0] != 0:
+          clic_sur_taverne(0)
+        if 445 < rel_x < 445 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[1] != 0:
+            clic_sur_taverne(1)
+        if 655 < rel_x < 655 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[2] != 0:
+            clic_sur_taverne(2)
+        #Pour le déplacement d'une carte de la taverne vers la main du joueur
+        if 25 < rel_x < 25 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[0] == 0:
+            clic_sur_board_vide(25, 720, 0)
+        if 235 < rel_x < 235 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[1] == 0:
+            clic_sur_board_vide(235, 720, 1)
+        if 445 < rel_x < 445 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[2] == 0:
+            clic_sur_board_vide(445, 720, 2)
+        if 655 < rel_x < 655 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[3] == 0:
+            clic_sur_board_vide(655, 720, 3)
+        if 865 < rel_x < 865 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[4] == 0:
+            clic_sur_board_vide(865, 720, 4)
+        if 1075 < rel_x < 1075 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[5] == 0:
+            clic_sur_board_vide(1075, 720, 5)
+        #Pour changer la couleur du rectangle autour des cartes du board
+        if 25 < rel_x < 25 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[0] != 0:
+            clic_sur_board_occupe(0)
+        if 235 < rel_x < 235 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[1] != 0:
+            clic_sur_board_occupe(1)
+        if 445 < rel_x < 445 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[2] != 0:
+            clic_sur_board_occupe(2)
+        if 655 < rel_x < 655 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[3] != 0:
+            clic_sur_board_occupe(3)
+        if 865 < rel_x < 865 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[4] != 0:
+            clic_sur_board_occupe(4)
+        if 1075 < rel_x < 1075 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[5] != 0:
+            clic_sur_board_occupe(5)
+        #Pour le déplacement d'une carte de la main du joueur vers le terrain
+        if 235 < rel_x < 235 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[0] == 0:
+            poser_un_serviteur(235, 420, 0)
+        if 445 < rel_x < 445 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[1] == 0:
+            poser_un_serviteur(445, 420, 1)
+        if 655 < rel_x < 655 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[2] == 0:
+            poser_un_serviteur(655, 420, 2)
+        if 865 < rel_x < 865 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[3] == 0:
+            poser_un_serviteur(865, 420, 3)
+        #Pour rafraichir la taverne :
+        if 960 < rel_x < 1100 and 180 < rel_y < 240:
+            refresh_taverne(Joueur)
+        #Pour vendre un serviteur :
+        if 1380 < rel_x < 1547 and 420 < rel_y < 680:
+            vendre_serviteur()
+        #Pour lancer le combat :
+        if 1350 < rel_x < 1550 and 910 < rel_y < 990:
+            lieu = "combat"
+            préparation_combat(Joueur, Adversaire)
+
+    if lieu == "combat":
+        if 1380 < rel_x < 1500 and 480 < rel_y < 550:
+            Lancer_combat(Joueur,Adversaire)
 
 def clic_sur_taverne(colors_index):
     global colors_taverne
@@ -411,19 +421,48 @@ def mise_a_jour_systeme_taverne():
         if emplacement_board_libre[i] != 0:
             label_liste_board[i] = tk.Label(fenetre, text=emplacement_board_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
             label_liste_board[i].place(x=50 + i * 210, y=886)
-            label_liste_board[i+3] = tk.Label(fenetre, text=emplacement_board_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_liste_board[i+3].place(x=155 + i * 210, y=886)
+            label_liste_board[i+6] = tk.Label(fenetre, text=emplacement_board_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
+            label_liste_board[i+6].place(x=155 + i * 210, y=886)
 
     for i in range(4):
         if emplacement_terrain_libre[i] != 0:
             label_liste_terrain[i] = tk.Label(fenetre, text=emplacement_terrain_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
             label_liste_terrain[i].place(x=260 + i * 210, y=586)
-            label_liste_terrain[i+3] = tk.Label(fenetre, text=emplacement_terrain_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_liste_terrain[i+3].place(x=365 + i * 210, y=586)
+            label_liste_terrain[i+4] = tk.Label(fenetre, text=emplacement_terrain_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
+            label_liste_terrain[i+4].place(x=365 + i * 210, y=586)
 
     gold_joueur.destroy()
     gold_joueur = tk.Label(fenetre, text=Joueur.gold, font=("Calibri", 18), fg="black", bg='#c0c0c0')
     gold_joueur.place(x=1420, y=190)
+
+
+
+def mise_a_jour_systeme_combat(p1,p2):
+    global label_combat_liste, label_opposant_liste
+    #On détruit d'abord les pv/points d'attaque affichés précemment
+    for i in range(8):
+        if label_combat_liste[i] != 0:
+            label_combat_liste[i].destroy()
+            label_combat_liste[i] = 0
+        if label_opposant_liste[i] != 0:
+            label_opposant_liste[i].destroy()
+            label_opposant_liste[i] = 0
+
+
+    #On affiche les nouveaux points d'attaque et points de vie
+    for i in range(4):
+        if p1.serviteurs_au_combat[i] != 0:
+            label_combat_liste[i] = tk.Label(fenetre, text=p1.serviteurs_au_combat[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
+            label_combat_liste[i].place(x=260 + i * 210, y=866)
+            label_combat_liste[i+4] = tk.Label(fenetre, text=p1.serviteurs_au_combat[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
+            label_combat_liste[i+4].place(x=365 +i*210, y=866)
+        if p2.serviteurs_au_combat[i] != 0:
+            label_combat_liste[i] = tk.Label(fenetre, text=p2.serviteurs_au_combat[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
+            label_combat_liste[i].place(x=260 + i * 210, y=286)
+            label_combat_liste[i+4] = tk.Label(fenetre, text=p2.serviteurs_au_combat[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
+            label_combat_liste[i+4].place(x=365 +i*210, y=286)
+
+
 
 
 def refresh_taverne(Joueur):
@@ -452,45 +491,52 @@ for i in range(4):
     liste_opposants[i] = Murloc_type_4(i+1000)
 
 
-def Bataille2(p1,p2, p1_next_battler, p2_next_battler):
-    while (p1.serviteurs_au_combat[p1_next_battler] == 0):      # Boucle pour trouver un serviteur du joueur 1
-        p1_next_battler += 1
-        if (p1_next_battler == 4):
-            p1_next_battler = 0
+def Bataille2(p1,p2):
+    while (p1.serviteurs_au_combat[p1.next_battler] == 0):      # Boucle pour trouver un serviteur du joueur 1
+        p1.next_battler += 1
+        if (p1.next_battler == 4):
+            p1.next_battler = 0
 
     target = rd.randint(0, 3)
     while (p2.serviteurs_au_combat[target] == 0):           # Boucle pour trouver une cible : un serviteur du joueur 2
         target = rd.randint(0, 3)
 
-    a = p1.serviteurs_au_combat[p1_next_battler].attaquer(p2.serviteurs_au_combat[target])      # a permet de déterminer quels serviteurs sont morts
+    a = p1.serviteurs_au_combat[p1.next_battler].attaquer(p2.serviteurs_au_combat[target])      # a permet de déterminer quels serviteurs sont morts
     if (a == 1 or a == 3):
-        p1.serviteurs_au_combat[p1_next_battler] = 0
+        p1.serviteurs_au_combat[p1.next_battler] = 0
     if (a == 2 or a == 3):
-        p2.serviteurs_au_combat[p1_next_battler] = 0
-    p1_next_battler += 1
-    time.sleep(1)
+        p2.serviteurs_au_combat[target] = 0
+    p1.next_battler += 1
+    if (p1.next_battler == 4):
+        p1.next_battler = 0
+    mise_a_jour_systeme_combat(p1, p2)
+    canvas_combat.update()
+
 
 def Lancer_combat(p1,p2):
     next_attacker = rd.randint(1,2)     #Défini si c'est le joueur 1 qui commence à attaquer ou si c'est le 2ème. De plus, cette variable sera mise à jour à chaque attaque.
-    p1_next_battler = 0
-    p2_next_battler = 0
     while (p1.serviteurs_au_combat != [0,0,0,0] and p2.serviteurs_au_combat != [0,0,0,0]):
         print(p1.serviteurs_au_combat)
         print(p2.serviteurs_au_combat)
         if (next_attacker == 1):
-            Bataille2(p1,p2, p1_next_battler, p2_next_battler)
+            Bataille2(p1,p2)
             next_attacker = 2
         else :
-            Bataille2(p2,p1, p2_next_battler, p1_next_battler)
+            Bataille2(p2,p1)
             next_attacker = 1
+
     print("fin du combat")
 
+
+
+image_combat = [0, 0, 0, 0]
+label_combat_liste = [0,0,0,0,0,0,0,0]
+image_opposant = [0,0,0,0]
+label_opposant_liste = [0,0,0,0,0,0,0,0]
+
 def préparation_combat(p1,p2):
-    global emplacement_terrain_libre, liste_opposants
-    image_combat = [0, 0, 0, 0]
-    label_combat_liste = [0,0,0,0,0,0,0,0]
-    image_opposant = [0,0,0,0]
-    label_opposant_liste = [0,0,0,0,0,0,0,0]
+    global emplacement_terrain_libre, liste_opposants, image_combat, label_combat_liste, image_opposant, label_opposant_liste
+
     canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)
     canvas_combat.configure(bg='#c0c0c0')
     canvas.grid_remove()
@@ -512,9 +558,16 @@ def préparation_combat(p1,p2):
         label_opposant_liste[i + 3] = tk.Label(fenetre, text=liste_opposants[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
         label_opposant_liste[i + 3].place(x=365 + i * 210, y=286)
 
-    #Copie des unités
+    #Autre affichage :
+    border_lancer_combat = canvas_combat.create_rectangle(1380, 480, 1500, 550, outline='black', width=5)
+
+    #Copie des unités pour le combat
     p1.serviteurs_au_combat = emplacement_terrain_libre
     p2.serviteurs_au_combat = liste_opposants
+
+
+
+
 
 
 

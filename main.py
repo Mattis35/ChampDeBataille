@@ -491,38 +491,48 @@ for i in range(4):
     liste_opposants[i] = Murloc_type_4(i+1000)
 
 
-def Bataille2(p1,p2):
-    while (p1.serviteurs_au_combat[p1.next_battler] == 0):      # Boucle pour trouver un serviteur du joueur 1
-        p1.next_battler += 1
-        if (p1.next_battler == 4):
-            p1.next_battler = 0
+def Bataille1(Joueur1,Joueur2):
+    #while (Joueur1.serviteurs_au_combat != [0,0,0,0] and Joueur2.serviteurs_au_combat != [0,0,0,0]):
+        while (Joueur1.serviteurs_au_combat[Joueur1.next_battler] == 0):      # Boucle pour trouver un serviteur du joueur 1
+            Joueur1.next_battler += 1
+            if (Joueur1.next_battler == 4):
+                Joueur1.next_battler = 0
 
-    target = rd.randint(0, 3)
-    while (p2.serviteurs_au_combat[target] == 0):           # Boucle pour trouver une cible : un serviteur du joueur 2
         target = rd.randint(0, 3)
+        while (Joueur2.serviteurs_au_combat[target] == 0):           # Boucle pour trouver une cible : un serviteur du joueur 2
+            target = rd.randint(0, 3)
 
-    a = p1.serviteurs_au_combat[p1.next_battler].attaquer(p2.serviteurs_au_combat[target])      # a permet de déterminer quels serviteurs sont morts
+        a = Joueur1.serviteurs_au_combat[Joueur1.next_battler].attaquer(Joueur2.serviteurs_au_combat[target])
+
+        return a,target
+
+
+def Bataille2(Joueur1, Joueur2, a, target):
     if (a == 1 or a == 3):
-        p1.serviteurs_au_combat[p1.next_battler] = 0
+        Joueur1.serviteurs_au_combat[Joueur1.next_battler] = 0
     if (a == 2 or a == 3):
-        p2.serviteurs_au_combat[target] = 0
-    p1.next_battler += 1
-    if (p1.next_battler == 4):
-        p1.next_battler = 0
-    mise_a_jour_systeme_combat(p1, p2)
-    canvas_combat.update()
+        Joueur2.serviteurs_au_combat[target] = 0
+    Joueur1.next_battler += 1
+    if (Joueur1.next_battler == 4):
+        Joueur1.next_battler = 0
 
 
-def Lancer_combat(p1,p2):
+def Lancer_combat(Joueur1,Joueur2):
     next_attacker = rd.randint(1,2)     #Défini si c'est le joueur 1 qui commence à attaquer ou si c'est le 2ème. De plus, cette variable sera mise à jour à chaque attaque.
-    while (p1.serviteurs_au_combat != [0,0,0,0] and p2.serviteurs_au_combat != [0,0,0,0]):
-        print(p1.serviteurs_au_combat)
-        print(p2.serviteurs_au_combat)
+    while (Joueur1.serviteurs_au_combat != [0,0,0,0] and Joueur2.serviteurs_au_combat != [0,0,0,0]):
         if (next_attacker == 1):
-            Bataille2(p1,p2)
+            a,target = Bataille1(Joueur1,Joueur2)
+            time.sleep(1)
+            mise_a_jour_systeme_combat(Joueur1, Joueur2)
+            canvas_combat.update()
+            Bataille2(Joueur1,Joueur2,a,target)
             next_attacker = 2
         else :
-            Bataille2(p2,p1)
+            a, target = Bataille1(Joueur2,Joueur1)
+            time.sleep(1)
+            mise_a_jour_systeme_combat(Joueur1, Joueur2)
+            canvas_combat.update()
+            Bataille2(Joueur2, Joueur1, a, target)
             next_attacker = 1
 
     print("fin du combat")

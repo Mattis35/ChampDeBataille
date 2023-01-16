@@ -17,7 +17,7 @@ canvas_taverne.grid()
 canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)     #Canvas utilisé pour l'interface combat
 canvas_combat.configure(bg='#c0c0c0')
 
-
+# On importe l'image vide, utile quand il n'y a pas de serviteur sur une tuile
 image_void = tk.PhotoImage(file="Images/void.png")
 
 
@@ -33,7 +33,7 @@ class Player:
 class Serviteur:
     def __init__(self):
         self.nom = ""
-        self.pv = 0
+        self.hp = 0
         self.atq = 0
         self.tier = 0
         self.image = None
@@ -54,7 +54,7 @@ class Murloc_type_1(Serviteur):
     def __init__(self):
         super().__init__()
         self.nom = "Murloc explorateur"
-        self.pv = 1
+        self.hp = 1
         self.atq = 1
         self.tier = 1
         self.tribe = "Murloc"
@@ -64,7 +64,7 @@ class Murloc_type_2(Serviteur):
     def __init__(self):
         super().__init__()
         self.nom = "Murloc acrobate"
-        self.pv = 3
+        self.hp = 3
         self.atq = 1
         self.tier = 1
         self.tribe = "Murloc"
@@ -74,7 +74,7 @@ class Murloc_type_3(Serviteur):
     def __init__(self):
         super().__init__()
         self.nom = "Murloc ecuyer"
-        self.pv = 4
+        self.hp = 4
         self.atq = 4
         self.tier = 2
         self.tribe = "Murloc"
@@ -84,7 +84,7 @@ class Murloc_type_4(Serviteur):
     def __init__(self):
         super().__init__()
         self.nom = "Le sage vert"
-        self.pv = 6
+        self.hp = 6
         self.atq = 6
         self.tier = 3
         self.tribe = "Murloc"
@@ -94,7 +94,7 @@ class Paladin_type_1(Serviteur):
     def __init__(self):
         super().__init__()
         self.nom = "Guerrier sacré"
-        self.pv = 3
+        self.hp = 3
         self.atq = 1
         self.tier = 1
         self.tribe = "Paladin"
@@ -104,7 +104,7 @@ class Bete_type_1(Serviteur):
     def __init__(self):
         super().__init__()
         self.nom = "La bete sanguinaire"
-        self.pv = 4
+        self.hp = 4
         self.atq = 2
         self.tier = 1
         self.tribe = "Bete"
@@ -135,27 +135,40 @@ class Tile:
         self.canvas = canvas    # Permet de savoir sur quel canvas se situe l'objet
         self.serviteur = 0  #Permet de savoir quel serviteur est sur la tuile, vaut 0 si il n'y a pas de serviteur
         self.border = self.canvas.create_rectangle(x, y, x + self.largeur, y + self.longueur, outline=self.color, width=5)
-        self.image_posée = self.canvas.create_image(x, y, anchor=tk.NW, image=self.image)
-
+        self.image_affichage = self.canvas.create_image(x, y, anchor=tk.NW, image=self.image)
+        self.atq_affichage = 0
+        self.hp_affichage = 0
 
     def update_bordure(self):
         self.canvas.itemconfigure(self.border, outline=self.color)
 
     def update_image(self):
         # On supprime l'image affichée précédemment
-        self.canvas.delete(self.image_posée)
-
+        self.canvas.delete(self.image_affichage)
         #Si un serviteur est posé sur cette tuile, l'image de la tuile est l'image du serviteur
         if self.serviteur != 0:
             self.image = self.serviteur.image
         #Sinon l'image est l'image du vide
         else :
             self.image = image_void
-        self.image_posée = self.canvas.create_image(self.x, self.y, anchor=tk.NW, image=self.image)
+        self.image_affichage = self.canvas.create_image(self.x, self.y, anchor=tk.NW, image=self.image)
+
+    def update_stats(self):
+        if self.atq_affichage != 0:
+            self.atq_affichage.destroy()
+        if self.serviteur != 0:
+            self.atq_affichage = tk.Label(fenetre, text=self.serviteur.atq, font=("Calibri", 12), fg="blue", bg="wheat")
+            self.atq_affichage.place(x=self.atq_x, y=self.atq_y)
+        if self.hp_affichage != 0:
+            self.hp_affichage.destroy()
+        if self.serviteur != 0:
+            self.hp_affichage = tk.Label(fenetre, text=self.serviteur.hp, font=("Calibri", 12), fg="red", bg="wheat")
+            self.hp_affichage.place(x=self.hp_x, y=self.hp_y)
 
     def update(self):
         self.update_bordure()
         self.update_image()
+        self.update_stats()
 
 
 
@@ -180,6 +193,11 @@ Tiles_total_taverne = Tiles_taverne + Tiles_main + Tiles_plateau # Liste de 13
 
 lieu = "taverne" # Permet de savoir si l'on se trouve à la taverne ou au combat
 
+# Créations de rectangles servant de boutons pour le menu taverne :
+rectangle_rafraichir_taverne = canvas_taverne.create_rectangle(960, 180, 1100, 240, outline='black', width=5)
+rectangle_vendre_serviteur = canvas_taverne.create_rectangle(1380, 420, 1380 + 167, 420 + 260, outline='black', width=5)
+rectangle_combat = canvas_taverne.create_rectangle(1350, 910, 1550, 990, outline='black', width=5)
+
 
 # Fonctions
 
@@ -195,13 +213,24 @@ def on_mouse_click(event):
 
     if lieu == "taverne":
 
+        for i in range(4):
+            if Tiles_plateau[i].x < rel_x < Tiles_plateau[i].x + Tiles_plateau[i].largeur and Tiles_plateau[i].y < rel_y < Tiles_plateau[i].y + Tiles_plateau[i].longueur and Tiles_plateau[i].image != image_void:
+                echange_cartes_plateau(i)
         for i in range(13):
             if Tiles_total_taverne[i].x < rel_x < Tiles_total_taverne[i].x + Tiles_total_taverne[i].largeur and Tiles_total_taverne[i].y < rel_y < Tiles_total_taverne[i].y + Tiles_total_taverne[i].longueur and Tiles_total_taverne[i].image != image_void:
                 clic_sur_carte(i)
         for i in range(6):
             if Tiles_main[i].x < rel_x < Tiles_main[i].x + Tiles_main[i].largeur and Tiles_main[i].y < rel_y < Tiles_main[i].y + Tiles_main[i].longueur and Tiles_main[i].image == image_void:
                 clic_sur_main_vide(i)
-
+        for i in range(4):
+            if Tiles_plateau[i].x < rel_x < Tiles_plateau[i].x + Tiles_plateau[i].largeur and Tiles_plateau[i].y < rel_y < Tiles_plateau[i].y + Tiles_plateau[i].longueur and Tiles_plateau[i].image == image_void:
+                clic_sur_plateau_vide(i)
+        if 960 < rel_x < 1100 and 180 < rel_y < 240:
+            rafraichir_taverne(Joueur)
+        if 1380 < rel_x < 1547 and 420 < rel_y < 680:
+            vendre_serviteur(Joueur)
+        if 1350 < rel_x < 1550 and 910 < rel_y < 960:
+            preparation_combat()
 
 
 def remplissage_taverne(tier):
@@ -210,7 +239,24 @@ def remplissage_taverne(tier):
         nb_aléatoire = rd.randint(0, nb_cartes-1)
 
         Tiles_taverne[i].serviteur = Liste_tier[tier-1][nb_aléatoire]()
-        Tiles_taverne[i].update_image()
+        Tiles_taverne[i].update()
+
+def rafraichir_taverne(Joueur):
+    if Joueur.gold >= 1:
+        for i in range(3):
+            Tiles_taverne[i].serviteur = 0
+        Joueur.gold = Joueur.gold - 1
+        remplissage_taverne(Joueur.taverne_tier)
+    else :
+        print("You need 1 gold to refresh tavern")
+
+def vendre_serviteur(Joueur):
+    for i in range(3,13):
+        if Tiles_total_taverne[i].color == "red":
+            Tiles_total_taverne[i].color = "black"
+            Tiles_total_taverne[i].serviteur = 0
+            Tiles_total_taverne[i].update()
+            Joueur.gold += 1
 
 def clic_sur_carte(indice):
     a = "black"
@@ -221,8 +267,6 @@ def clic_sur_carte(indice):
         Tiles_total_taverne[i].update_bordure()
     Tiles_total_taverne[indice].color = a
     Tiles_total_taverne[indice].update_bordure()
-
-
 
 def clic_sur_main_vide(indice):
     for i in range(3):
@@ -236,14 +280,36 @@ def clic_sur_main_vide(indice):
 
             else : print("You need to have 3 gold to buy a card")
 
+def clic_sur_plateau_vide(indice):
+    for i in range(6):
+        if Tiles_main[i].color == "red":
+            Tiles_main[i].color = "black"
+            Tiles_plateau[indice].serviteur = Tiles_main[i].serviteur
+            Tiles_main[i].serviteur = 0
+            Tiles_plateau[indice].update()
+            Tiles_main[i].update()
 
+def echange_cartes_plateau(indice):
+    for i in range(4):
+        if i != indice:
+            if Tiles_plateau[i].color == "red":
+                Tiles_plateau[i].color = "black"
+                Tiles_plateau[indice].color = "red" # Necessaire a cause de l'enchainement de conditions dans la fonction "on_mouse_click", sinon la bordure était de couleur noire
+                temporaire = Tiles_plateau[indice].serviteur
+                Tiles_plateau[indice].serviteur = Tiles_plateau[i].serviteur
+                Tiles_plateau[i].serviteur = temporaire
+                Tiles_plateau[indice].update()
+                Tiles_plateau[i].update()
+
+#def
 
 
 #Tests
 Joueur = Player("Mattis")
 
 remplissage_taverne(Joueur.taverne_tier)
-
+#canvas_taverne.update()
+#time.sleep(1)
 
 fenetre.bind("<Button-1>", on_mouse_click)
 fenetre.mainloop()

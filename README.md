@@ -14,10 +14,11 @@ Il est possible d'échanger la place des serviteurs présents sur le plateau. Po
 Il est possible de vendre un serviteur du plateau ou de notre main. Pour cela, on clique sur le serviteur puis on clique dans la case "vendre un serviteur", cela rapporte 1 gold
 
 Il existe 4 niveaux de taverne avec : 
-4 serviteurs au niveau 1
-1 serviteur au niveau 2
-1 serviteur au niveau 3
-0 serviteur au niveau 4
+4 serviteurs au niveau 1,
+1 serviteur au niveau 2,
+1 serviteur au niveau 3,
+0 serviteur au niveau 4,
+
 
 Après avoir terminé son tour avec le joueur 1, il faut appuyer sur le boutton "fin du tour" en bas a droite, on joue alors le joueur 2 appelé "ennemy".
 Après avoir finis le tour du joueur 2, il faut appuyer sur le bouton "combat", l'interface de combat s'affiche.

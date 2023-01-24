@@ -604,7 +604,7 @@ def switch_to_tavern(p1, p2, indice):
     affichage_texte_taverne_dynamique(p2)
     # On remplis la taverne si c'est le 1er tour de jeu :
     if Nombre_combats == 0:
-        rafraichir_taverne(p2)
+        remplissage_taverne(p2, p2.taverne_tier)
 
 #Bonus
 def Cris_de_guerre(player, id_cris_de_guerre, option):

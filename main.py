@@ -631,8 +631,7 @@ while not 0 < len(nom) <= 15:
     if len(nom) > 15:
         print("15 caractères maximum!")
     nom = input("Entrez votre nom (Max 15 caractères) : ")
-print ("(Ouvrez la fenêtre)")
-
+fenetre.lift()
 
 # Paramètres du joueur
 J1 = Player(nom, canvas_taverne1)

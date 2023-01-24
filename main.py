@@ -27,6 +27,9 @@ canvas_taverne2.configure(bg='#c0c0c0')
 canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)     #Canvas utilisé pour l'interface combat
 canvas_combat.configure(bg='#c0c0c0')
 
+canvas_texte = tk.Canvas(fenetre, width=1600, height=1000)     #Canvas utilisé pour l'interface textuelle
+canvas_texte.configure(bg='#c0c0c0')
+
 # On importe l'image vide, utile quand il n'y a pas de serviteur sur une tuile
 image_void = tk.PhotoImage(file="Images/void.png")
 
@@ -34,7 +37,7 @@ image_void = tk.PhotoImage(file="Images/void.png")
 class Player:
     def __init__(self, nom, canvas_taverne):
         self.nom = nom
-        self.hp = 20
+        self.hp = 1
         self.hp_max = 20
         self.gold = 4       # Le joueur commence avec 4 gold car on remplis automatiquement sa taverne avant qu'il ne commence à jouer ce qui coute 1 gold, il n'a donc que 3 gold au démarrage
         self.taverne_tier = 1
@@ -95,6 +98,17 @@ class Player:
             self.prix_upgrade_taverne = 0
         affichage_texte_taverne_dynamique(self)
 
+    def mort(self, opposant):
+        global lieu
+        lieu = "FIN"
+        canvas_combat.grid_remove()
+        canvas_texte.grid()
+        texte_fin = tk.Label(canvas_texte, text=self.nom + " a été vaincu, victoire de " + opposant.nom, font=("Times New Roman", 40), fg="blue", bg='#c0c0c0')
+        texte_fin.place(x=350, y=400)
+        texte_pv_fin1 = tk.Label(canvas_texte, text="Points de vie de " + self.nom + " : " + str(self.hp), font=("Arial", 25), fg="black", bg='#c0c0c0')
+        texte_pv_fin1.place(x=425, y=500)
+        texte_pv_fin2 = tk.Label(canvas_texte, text="Points de vie de " + opposant.nom + " : " + str(opposant.hp),font=("Arial", 25), fg="black", bg='#c0c0c0')
+        texte_pv_fin2.place(x=425, y=540)
 
 
 class Serviteur:
@@ -539,10 +553,18 @@ def lancer_combat(p1,p2):
     lieu = "fin_combat"
     p1.degat_subis(p2)
     p2.degat_subis(p1)
-    #Affichage de texte :
+
+    # Affichage de texte :
     texte_lancer_combat.destroy()
     texte_lancer_combat = tk.Label(canvas_combat, text="Cliquez ici pour rentrer à la taverne", font=("Calibri", 14), fg="black", bg='#c0c0c0')
     texte_lancer_combat.place(x=1295, y=450)
+
+    # Cas où un joueur meurs
+    if p1.hp <= 0:
+        p1.mort(p2)
+    if p2.hp <= 0:
+        p2.mort(p1)
+
 
 def retour_taverne(p1,p2):
     global lieu, Nombre_combats, texte_lancer_combat

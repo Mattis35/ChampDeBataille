@@ -37,7 +37,7 @@ image_void = tk.PhotoImage(file="Images/void.png")
 class Player:
     def __init__(self, nom, canvas_taverne):
         self.nom = nom
-        self.hp = 1
+        self.hp = 20
         self.hp_max = 20
         self.gold = 4       # Le joueur commence avec 4 gold car on remplis automatiquement sa taverne avant qu'il ne commence à jouer ce qui coute 1 gold, il n'a donc que 3 gold au démarrage
         self.taverne_tier = 1

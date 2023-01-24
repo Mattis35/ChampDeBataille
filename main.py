@@ -205,14 +205,26 @@ class Bete_type_1(Serviteur):
         self.cris_de_guerre = None
         self.apparition = None
 
+class Bete_type_2(Serviteur):
+    def __init__(self):
+        super().__init__()
+        self.nom = "Bulbon the beast"
+        self.hp = 5
+        self.atq = 5
+        self.tier = 4
+        self.tribe = "Bete"
+        self.image = tk.PhotoImage(file="Images/Bete_2.png")
+        self.cris_de_guerre = None
+        self.apparition = [1,[2,2]]
+
 
 # Dictionnaire de tous les serviteurs existants
 Liste_cartes_tier1 = [Murloc_type_1, Murloc_type_2, Paladin_type_1, Bete_type_1]
 Liste_cartes_tier2 = Liste_cartes_tier1 + [Murloc_type_3]
 Liste_cartes_tier3 = Liste_cartes_tier2 + [Murloc_type_4]
-Liste_cartes_tier4 = Liste_cartes_tier3 + []
+Liste_cartes_tier4 = Liste_cartes_tier3 + [Bete_type_2]
 
-Liste_tier = [Liste_cartes_tier1 , Liste_cartes_tier2, Liste_cartes_tier3]
+Liste_tier = [Liste_cartes_tier1 , Liste_cartes_tier2, Liste_cartes_tier3, Liste_cartes_tier4]
 
 
 
@@ -480,7 +492,7 @@ def check_if_apparition(player, nouveau_serviteur, indice):
     for i in range(4):
         if player.Tiles_plateau[i].serviteur != 0:
             if player.Tiles_plateau[i].serviteur.apparition != None and i != indice:
-                Apparition(player, nouveau_serviteur.tribe, player.Tiles_plateau[i].serviteur.apparition[0], player.Tiles_plateau[i].serviteur.apparition[1])
+                Apparition(player, nouveau_serviteur.tribe, i)
 
 
 def echange_cartes_plateau(player, indice):
@@ -607,8 +619,11 @@ def Cris_de_guerre(player, id_cris_de_guerre, option):
                 return(0)
         print("le plateau est plein")
 
-def Apparition(player, tribe, id_apparition, option):
+def Apparition(player, tribe, indice):
+    id_apparition = player.Tiles_plateau[indice].serviteur.apparition[0]
+    option = player.Tiles_plateau[indice].serviteur.apparition[1]
     if id_apparition == 0:
+        # id = 0 correspond à "donne un bonus d'attaque et ou de vie à un serviteur d'une certaine tribue"
         if tribe == "Murloc":
             target = rd.randint(0,3)
             while player.Tiles_plateau[target].serviteur == 0:
@@ -620,6 +635,12 @@ def Apparition(player, tribe, id_apparition, option):
             player.Tiles_plateau[target].serviteur.atq += option[0]
             player.Tiles_plateau[target].serviteur.hp += option[1]
             player.Tiles_plateau[target].update()
+    if id_apparition == 1:
+        #id = 1 correspond à "gagne un bonus d'attaque et ou de vie si le serviteur invoqué est de la bonne tribue
+        if tribe == "Bete":
+            player.Tiles_plateau[indice].serviteur.atq += option[0]
+            player.Tiles_plateau[indice].serviteur.hp += option[1]
+            player.Tiles_plateau[indice].update()
 
 
 
@@ -638,7 +659,7 @@ J1 = Player(nom, canvas_taverne1)
 J2 = Player("Ennemy", canvas_taverne2)
 
 
-rafraichir_taverne(J1)
+remplissage_taverne(J1,J1.taverne_tier)
 affichage_texte_taverne_statique(J1)
 affichage_texte_taverne_statique(J2)
 affichage_texte_taverne_dynamique(J1)

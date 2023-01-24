@@ -34,6 +34,7 @@ class Player:
     def __init__(self, nom, canvas_taverne):
         self.nom = nom
         self.hp = 20
+        self.hp_max = 20
         self.gold = 3
         self.taverne_tier = 1
         self.prix_upgrade_taverne = 5
@@ -63,6 +64,7 @@ class Player:
         self.affichage_cout_upgrade_taverne = 0
 
     def initialisation_combat(self, position, Tiles):
+        self.next_battler = 0
         if position == 1:
             y = 720    # La variable y permet de placer un joueur en haut de l'écran et l'autre en bas
         if position == 2:
@@ -71,6 +73,14 @@ class Player:
         for i in range(4):
             self.Tiles_combat[i] = Tile.constructeur_copie(235 + 210 * i, y, Tiles[i])
             self.Tiles_combat[i].update()
+
+    def degat_subis(self, opposant):
+        count = 0
+        for i in range(4):
+            if opposant.Tiles_combat[i].serviteur != 0:
+                self.hp = self.hp - opposant.Tiles_combat[i].serviteur.tier
+                count += opposant.Tiles_combat[i].serviteur.tier
+        print(self.nom + " a subis " + str(count) + " degats")
 
     def mise_a_jour_fin_combat(self):
         global Nombre_combats
@@ -309,9 +319,11 @@ def affichage_texte_taverne_dynamique(Joueur):
         Joueur.affichage_gold.destroy()
         Joueur.affichage_cout_upgrade_taverne.destroy()
     Joueur.affichage_tier = tk.Label(Joueur.canvas_taverne, text="Your tavern tier  :  "+str(Joueur.taverne_tier), font=("Calibri", 18), fg="black", bg='#c0c0c0')
-    Joueur.affichage_tier.place(x=1300, y=160)
+    Joueur.affichage_tier.place(x=1300, y=190)
     Joueur.affichage_gold = tk.Label(Joueur.canvas_taverne, text="Your gold  :  "+str(Joueur.gold), font=("Calibri", 18), fg="black", bg='#c0c0c0')
-    Joueur.affichage_gold.place(x=1300, y=190)
+    Joueur.affichage_gold.place(x=1300, y=220)
+    Joueur.affichage_tier = tk.Label(Joueur.canvas_taverne, text=str(Joueur.hp) + " / " + str(Joueur.hp_max) +  " hp", font=("Calibri", 18), fg="black", bg='#c0c0c0')
+    Joueur.affichage_tier.place(x=1300, y=145)
     Joueur.affichage_cout_upgrade_taverne = tk.Label(Joueur.canvas_taverne, text="cost : "+ str(Joueur.prix_upgrade_taverne)+" gold", font=("Calibri", 13), fg="black", bg='#c0c0c0')
     Joueur.affichage_cout_upgrade_taverne.place(x=1085, y=167)
 
@@ -475,7 +487,7 @@ def preparation_combat(p1,p2):
     p1.initialisation_combat(1, p1.Tiles_plateau)
     p2.initialisation_combat(2, p2.Tiles_plateau)
 
-def Bataille(p1,p2):
+def Bataille(p1,p2, next_attacker):
     while (p1.Tiles_combat[p1.next_battler].serviteur == 0):  # Boucle pour trouver un serviteur du joueur 1
         p1.next_battler += 1
         if (p1.next_battler == 4):
@@ -486,12 +498,18 @@ def Bataille(p1,p2):
         target = rd.randint(0, 3)
 
     a = p1.Tiles_combat[p1.next_battler].serviteur.attaquer(p2.Tiles_combat[target].serviteur)
-    p1.Tiles_combat[p1.next_battler].y -= 100
+    if next_attacker == 1:
+        p1.Tiles_combat[p1.next_battler].y -= 100
+    if next_attacker == 2:
+        p1.Tiles_combat[p1.next_battler].y += 100
     p1.Tiles_combat[p1.next_battler].update()
     p2.Tiles_combat[target].update()
     canvas_combat.update()
     time.sleep(1)
-    p1.Tiles_combat[p1.next_battler].y += 100
+    if next_attacker == 1:
+        p1.Tiles_combat[p1.next_battler].y += 100
+    if next_attacker == 2:
+        p1.Tiles_combat[p1.next_battler].y -= 100
     p1.Tiles_combat[p1.next_battler].update()
     if (a == 1 or a == 3):
         p1.Tiles_combat[p1.next_battler].serviteur = 0
@@ -510,12 +528,14 @@ def lancer_combat(p1,p2):
     next_attacker = rd.randint(1,2)     #Défini si c'est le joueur 1 qui commence à attaquer ou si c'est le 2ème. De plus, cette variable sera mise à jour à chaque attaque.
     while (p1.Tiles_combat[0].serviteur != 0 or p1.Tiles_combat[1].serviteur != 0 or p1.Tiles_combat[2].serviteur != 0 or p1.Tiles_combat[3].serviteur != 0) and (p2.Tiles_combat[0].serviteur != 0 or p2.Tiles_combat[1].serviteur != 0 or p2.Tiles_combat[2].serviteur != 0 or p2.Tiles_combat[3].serviteur != 0):
         if (next_attacker == 1):
-            Bataille(p1,p2)
+            Bataille(p1,p2, next_attacker)
             next_attacker = 2
         else :
-            Bataille(p2, p1)
+            Bataille(p2, p1, next_attacker)
             next_attacker = 1
     lieu = "fin_combat"
+    p1.degat_subis(p2)
+    p2.degat_subis(p1)
 
 def retour_taverne(p1,p2):
     global lieu, Nombre_combats
@@ -573,7 +593,7 @@ J2 = Player("Ennemy", canvas_taverne2)
 
 
 for i in range (4):
-    J2.Tiles_plateau[i].serviteur = Murloc_type_4()
+    J2.Tiles_plateau[i].serviteur = Murloc_type_2()
 
 remplissage_taverne(J1, J1.taverne_tier)
 affichage_texte_taverne_statique(J1)

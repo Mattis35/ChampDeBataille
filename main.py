@@ -3,218 +3,344 @@ import random as rd
 import time
 
 
-#Création de la fenetres et des 2 canvas
+# Variables globales
+
+lieu = "taverne1" # Permet de savoir si l'on se trouve à la taverne ou au combat
+indice_taverne = 1  # Permet de savoir si on se trouve dans la taverne du joueur 1 ou 2
+Nombre_combats = 0 # Augmente de 1 après chaque phase de combat, permet de connaître le tour du jeu
+
+
 
 fenetre = tk.Tk()
 fenetre.geometry("1600x1000")  # Taille de la fenêtre
 fenetre.configure(bg='#c0c0c0')
 
-canvas = tk.Canvas(fenetre, width=1600, height=1000)    #Canvas utilisé pour l'interface taverne
-canvas.pack()
-canvas.configure(bg='#c0c0c0')      # Couleur gris clair
-canvas.grid()
+# Configuration des canvas
+
+canvas_taverne1 = tk.Canvas(fenetre, width=1600, height=1000)    #Canvas utilisé pour l'interface taverne
+canvas_taverne1.configure(bg='#c0c0c0')      # Couleur gris clair
+canvas_taverne1.grid()  #Affiche ce canva à l'écran
+
+canvas_taverne2 = tk.Canvas(fenetre, width=1600, height=1000)
+canvas_taverne2.configure(bg='#c0c0c0')
 
 canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)     #Canvas utilisé pour l'interface combat
 canvas_combat.configure(bg='#c0c0c0')
 
-
-# Création des bordures d'images pour les interfaces :
-border_joueur_waiting_0 = canvas.create_rectangle(25, 720, 25 + 167, 720 + 260, outline='black', width=5)
-border_joueur_waiting_1 = canvas.create_rectangle(235, 720, 235 + 167, 720 + 260, outline='black', width=5)
-border_joueur_waiting_2 = canvas.create_rectangle(445, 720, 445 + 167, 720 + 260, outline='black', width=5)
-border_joueur_waiting_3 = canvas.create_rectangle(655, 720, 655 + 167, 720 + 260, outline='black', width=5)
-border_joueur_waiting_4 = canvas.create_rectangle(865, 720, 865 + 167, 720 + 260, outline='black', width=5)
-border_joueur_waiting_5 = canvas.create_rectangle(1075, 720, 1075 + 167, 720 + 260, outline='black', width=5)
-
-border_battler_on_field_0 = canvas.create_rectangle(235, 420, 235 + 167, 420 + 260, outline='black', width=5)
-border_battler_on_field_1 = canvas.create_rectangle(445, 420, 445 + 167, 420 + 260, outline='black', width=5)
-border_battler_on_field_2 = canvas.create_rectangle(655, 420, 655 + 167, 420 + 260, outline='black', width=5)
-border_battler_on_field_3 = canvas.create_rectangle(865, 420, 865 + 167, 420 + 260, outline='black', width=5)
-
-border_taverne0 = canvas.create_rectangle(235, 100, 235 + 167, 100 + 260, outline='black', width=5)
-border_taverne1 = canvas.create_rectangle(445, 100, 445 + 167, 100 + 260, outline='black', width=5)
-border_taverne2 = canvas.create_rectangle(655, 100, 655 + 167, 100 + 260, outline='black', width=5)
-
-border_rafraichir_taverne = canvas.create_rectangle(960, 180, 1100, 240, outline='black', width=5)
-border_vendre_serviteur = canvas.create_rectangle(1380, 420, 1380 + 167, 420 + 260, outline='black', width=5)
-border_combat = canvas.create_rectangle(1350, 910, 1550, 990, outline='black', width=5)
-
-border_board_liste = [border_joueur_waiting_0, border_joueur_waiting_1, border_joueur_waiting_2, border_joueur_waiting_3, border_joueur_waiting_4, border_joueur_waiting_5]
-border_taverne_liste = [border_taverne0 , border_taverne1 , border_taverne2]
+# On importe l'image vide, utile quand il n'y a pas de serviteur sur une tuile
+image_void = tk.PhotoImage(file="Images/void.png")
 
 
 class Player:
-    def __init__(self, nom):
+    def __init__(self, nom, canvas_taverne):
         self.nom = nom
         self.hp = 20
-        self.gold = 100
-        self.taverne_tier = 3
-        self.serviteurs_au_combat = [0,0,0,0]
-        self.next_battler = 0      #Utile en combat
+        self.hp_max = 20
+        self.gold = 4       # Le joueur commence avec 4 gold car on remplis automatiquement sa taverne avant qu'il ne commence à jouer ce qui coute 1 gold, il n'a donc que 3 gold au démarrage
+        self.taverne_tier = 1
+        self.prix_upgrade_taverne = 5
+        self.next_battler = 0
+        # Pour le combat :
+        self.canvas_taverne = canvas_taverne
+        self.Tiles_combat = []
+
+        # Création des 3 listes dans les quelles nous allons placer nos objets de type Tiles
+        self.Tiles_taverne = []  # Liste de 3
+        self.Tiles_main = []  # Liste de 6
+        self.Tiles_plateau = []  # Liste de 4
+        # Remplissage des 3 listes
+        for i in range(3):
+            self.Tiles_taverne = self.Tiles_taverne + [Tile("Taverne" + str(i), self.canvas_taverne, 235 + 210 * i, 100)]
+        for i in range(6):
+            self.Tiles_main = self.Tiles_main + [Tile("Main" + str(i), self.canvas_taverne, 25 + 210 * i, 720)]
+        for i in range(4):
+            self.Tiles_plateau = self.Tiles_plateau + [Tile("Plateau" + str(i), self.canvas_taverne, 235 + 210 * i, 420)]
+
+        # Création d'une liste regroupant les 3 listes précédentes pour que cela soit + pratique
+        self.Tiles_total_taverne = self.Tiles_taverne + self.Tiles_main + self.Tiles_plateau  # Liste de 13
+
+        # Necessaire pour de l'affichage supplémentaire
+        self.affichage_tier = 0
+        self.affichage_gold = 0
+        self.affichage_cout_upgrade_taverne = 0
+
+    def initialisation_combat(self, position, Tiles):
+        self.next_battler = 0
+        if position == 1:
+            y = 720    # La variable y permet de placer un joueur en haut de l'écran et l'autre en bas
+        if position == 2:
+            y = 120
+        self.Tiles_combat = [0,0,0,0]
+        for i in range(4):
+            self.Tiles_combat[i] = Tile.constructeur_copie(235 + 210 * i, y, Tiles[i])
+            self.Tiles_combat[i].update()
+
+    def degat_subis(self, opposant):
+        count = 0
+        for i in range(4):
+            if opposant.Tiles_combat[i].serviteur != 0:
+                self.hp = self.hp - opposant.Tiles_combat[i].serviteur.tier
+                count += opposant.Tiles_combat[i].serviteur.tier
+        print(self.nom + " a subis " + str(count) + " degats")
+
+    def mise_a_jour_fin_combat(self):
+        global Nombre_combats
+        self.gold += 1  # Sert à payer les frais de taverne quand on rafraichit
+        rafraichir_taverne(self)
+        self.gold = 3 + Nombre_combats
+        if self.gold > 10:
+            self.gold = 10
+        self.prix_upgrade_taverne -= 1
+        if self.prix_upgrade_taverne < 0:
+            self.prix_upgrade_taverne = 0
+        affichage_texte_taverne_dynamique(self)
 
 
 
 class Serviteur:
-    def __init__(self, id_serviteur):
+    def __init__(self):
         self.nom = ""
-        self.pv = 0
+        self.hp = 0
         self.atq = 0
         self.tier = 0
+        self.tribe = ""
         self.image = None
-        self.id_serviteur = id_serviteur
+        self.cris_de_guerre = 0
 
     def attaquer(self, opposant):
-        opposant.pv = opposant.pv - self.atq
-        self.pv = self.pv - opposant.atq
+        opposant.hp = opposant.hp - self.atq
+        self.hp = self.hp - opposant.atq
         a = 0
-        if (self.pv <= 0):
+        if (self.hp <= 0):
             a = a + 1  # La variable a permet de savoir si des combattants sont morts pendant l'attaque, si battler1 est mort a = 1, si battler 2 est mort a = 2 et si les deux sont morts a =3
-        if (opposant.pv <= 0):
+        if (opposant.hp <= 0):
             a = a + 2
         return a
 
-
 #Serviteurs
+
 class Murloc_type_1(Serviteur):
-    def __init__(self, id_serviteur):
-        super().__init__(id_serviteur)
+    def __init__(self):
+        super().__init__()
         self.nom = "Murloc explorateur"
-        self.pv = 1
+        self.hp = 1
         self.atq = 1
         self.tier = 1
         self.tribe = "Murloc"
         self.image = tk.PhotoImage(file="Images/Murloc_1.png")
+        self.cris_de_guerre = None
+        self.apparition = None
 
 class Murloc_type_2(Serviteur):
-    def __init__(self, id_serviteur):
-        super().__init__(id_serviteur)
+    def __init__(self):
+        super().__init__()
         self.nom = "Murloc acrobate"
-        self.pv = 3
+        self.hp = 3
         self.atq = 1
         self.tier = 1
         self.tribe = "Murloc"
         self.image = tk.PhotoImage(file="Images/Murloc_2.png")
+        self.cris_de_guerre = [0,0]
+        self.apparition = None
 
 class Murloc_type_3(Serviteur):
-    def __init__(self, id_serviteur):
-        super().__init__(id_serviteur)
+    def __init__(self):
+        super().__init__()
         self.nom = "Murloc ecuyer"
-        self.pv = 4
+        self.hp = 4
         self.atq = 4
         self.tier = 2
         self.tribe = "Murloc"
         self.image = tk.PhotoImage(file="Images/Murloc_3.png")
+        self.cris_de_guerre = None
+        self.apparition = [0,[1,1]]
 
 class Murloc_type_4(Serviteur):
-    def __init__(self, id_serviteur):
-        super().__init__(id_serviteur)
+    def __init__(self):
+        super().__init__()
         self.nom = "Le sage vert"
-        self.pv = 6
+        self.hp = 6
         self.atq = 6
         self.tier = 3
         self.tribe = "Murloc"
         self.image = tk.PhotoImage(file="Images/Murloc_4.png")
+        self.cris_de_guerre = None
+        self.apparition = None
 
 class Paladin_type_1(Serviteur):
-    def __init__(self, id_serviteur):
-        super().__init__(id_serviteur)
+    def __init__(self):
+        super().__init__()
         self.nom = "Guerrier sacré"
-        self.pv = 3
+        self.hp = 3
         self.atq = 1
         self.tier = 1
         self.tribe = "Paladin"
         self.image = tk.PhotoImage(file="Images/Paladin_1.png")
+        self.cris_de_guerre = None
+        self.apparition = None
 
 class Bete_type_1(Serviteur):
-    def __init__(self, id_serviteur):
-        super().__init__(id_serviteur)
+    def __init__(self):
+        super().__init__()
         self.nom = "La bete sanguinaire"
-        self.pv = 4
+        self.hp = 4
         self.atq = 2
         self.tier = 1
         self.tribe = "Bete"
         self.image = tk.PhotoImage(file="Images/Bete_1.png")
+        self.cris_de_guerre = None
+        self.apparition = None
 
 
+# Dictionnaire de tous les serviteurs existants
 Liste_cartes_tier1 = [Murloc_type_1, Murloc_type_2, Paladin_type_1, Bete_type_1]
 Liste_cartes_tier2 = Liste_cartes_tier1 + [Murloc_type_3]
 Liste_cartes_tier3 = Liste_cartes_tier2 + [Murloc_type_4]
+Liste_cartes_tier4 = Liste_cartes_tier3 + []
 
 Liste_tier = [Liste_cartes_tier1 , Liste_cartes_tier2, Liste_cartes_tier3]
 
-Liste_serviteurs = []       #Liste vide pour le moment, chaque fois que l'on crée un serviteur, on le rajoutera à cette liste.
-
-colors_taverne = [0,0,0]
-colors_board = [0,0,0,0,0,0]
-colors_terrain = [0,0,0,0]
-
-image_void = tk.PhotoImage(file="Images/void.png")
-
-image_taverne = [image_void, image_void, image_void]    #Image taverne stock les objets de type image que l'on crée afin de pouvoir afficher les images.
-emplacement_taverne_libre = [0,0,0]    # 0 correspond à une place libre, on met le nom du serviteur si la place est occupée
-image_board = [image_void, image_void, image_void, image_void, image_void, image_void]
-emplacement_board_libre = [0,0,0,0,0,0]
-image_terrain = [image_void, image_void, image_void, image_void]
-emplacement_terrain_libre = [0,0,0,0]
-
-#Texte :
-Message_bienvenue = tk.Label(fenetre, text="Bienvenue dans la taverne!", font=("Calibri", 18), fg="red", bg='#c0c0c0')
-Message_bienvenue.place(x=700, y=35)
-
-Message_taverne = tk.Label(fenetre, text="Achetez ici vos serviteurs", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_taverne.place(x = 20, y = 150)
-Message_taverne_fleche = tk.Label(fenetre, text="--->", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_taverne_fleche.place(x = 100, y = 180)
-
-Message_terrain1 = tk.Label(fenetre, text="Placez ici vos serviteurs", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_terrain2 = tk.Label(fenetre, text="pour le combat", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_terrain_fleche = tk.Label(fenetre, text="--->", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_terrain1.place(x = 20, y = 480)
-Message_terrain2.place(x = 50, y = 505)
-Message_terrain_fleche.place(x = 100, y = 535)
-
-Message_vente1 = tk.Label(fenetre, text="Vendez ici vos serviteurs", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_vente2 = tk.Label(fenetre, text="pour recuperer 1 gold", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_vente_fleche = tk.Label(fenetre, text="--->", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_vente1.place(x = 1140, y = 480)
-Message_vente2.place(x = 1150, y = 505)
-Message_vente_fleche.place(x = 1220, y = 535)
-
-Message_board1 = tk.Label(fenetre, text="Placez ici les serviteurs", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_board2 = tk.Label(fenetre, text="que vous achetez", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_board_fleche = tk.Label(fenetre, text="<---", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-Message_board1.place(x = 1270, y = 740)
-Message_board2.place(x = 1290, y = 765)
-Message_board_fleche.place(x = 1342, y = 793)
-
-message_rafraichir = tk.Label(fenetre, text="Refresh tavern", font=("Calibri", 14), fg="black", bg='#c0c0c0')
-message_rafraichir.place(x = 972, y = 250)
-message_rafraichir_cout = tk.Label(fenetre, text="cost : 1 gold", font=("Calibri", 13), fg="black", bg='#c0c0c0')
-message_rafraichir_cout.place(x = 980, y = 275)
-
-message_combat = tk.Label(fenetre, text="COMBAT", font=("Calibri", 15), fg="black", bg='#c0c0c0')
-message_combat.place(x = 1405, y = 870)
-
-#Paramètres du joueur
-Joueur = Player("M. Vilela Monteiro")
-Adversaire = Player("Ennemy")
-nom_joueur = tk.Label(fenetre, text=" " +Joueur.nom+ " ", font=("Calibri", 20), fg="red", bg='#c0c0c0', relief='solid',bd=2)
-nom_joueur.place(x=1300, y=100)
-gold_joueur_message = tk.Label(fenetre, text="Your gold :", font=("Calibri", 18), fg="black", bg='#c0c0c0')
-gold_joueur_message.place(x=1300, y=190)
-gold_joueur = tk.Label(fenetre, text=Joueur.gold, font=("Calibri", 18), fg="black", bg='#c0c0c0')
-gold_joueur.place(x=1420, y=190)
-tier_joueur_message = tk.Label(fenetre, text="Your tavern tier :", font=("Calibri", 18), fg="black", bg='#c0c0c0')
-tier_joueur_message.place(x=1300, y=160)
-tier_joueur = tk.Label(fenetre, text=Joueur.taverne_tier, font=("Calibri", 18), fg="black", bg='#c0c0c0')
-tier_joueur.place(x=1480, y=160)
-
-lieu = "taverne"    #Permet de savoir ou l'on se situe, lieu vaut "taverne" si on est dans la taverne et "combat" si on est au combat
 
 
-def on_mouse_click(event):
+class Tile:
+    def __init__(self, nom, canvas, x, y):
+        self.nom = nom
+        self.x = x  # Coordonnées du coin en haut à gauche de l'emplacement
+        self.y = y
+        self.largeur = 167
+        self.longueur = 260
+        self.image = image_void
+        self.color = "black"
+        self.canvas = canvas    # Permet de savoir sur quel canvas se situe l'objet
+        self.serviteur = 0  #Permet de savoir quel serviteur est sur la tuile, vaut 0 si il n'y a pas de serviteur
+        self.border = self.canvas.create_rectangle(x, y, x + self.largeur, y + self.longueur, outline=self.color, width=5)
+        self.image_affichage = self.canvas.create_image(x, y, anchor=tk.NW, image=self.image)
+        self.atq_affichage = 0
+        self.hp_affichage = 0
+
+    @classmethod
+    def constructeur_copie(cls, x, y, Tiles):
+        nom = "Tile_copie"
+        objet = cls(nom, canvas_combat, x , y)
+
+        if Tiles.serviteur != 0:
+            objet.serviteur = Serviteur()
+            objet.serviteur.nom = Tiles.serviteur.nom
+            objet.serviteur.hp = Tiles.serviteur.hp
+            objet.serviteur.atq = Tiles.serviteur.atq
+            objet.serviteur.tier = Tiles.serviteur.tier
+            objet.serviteur.tribe = Tiles.serviteur.tribe
+            objet.serviteur.image = Tiles.serviteur.image
+            objet.serviteur.cris_de_guerre = Tiles.serviteur.cris_de_guerre
+
+        return objet
+
+    def update_bordure(self):
+        self.canvas.delete(self.border)
+        self.border = self.canvas.create_rectangle(self.x, self.y, self.x + self.largeur, self.y + self.longueur, outline=self.color, width=5)
+
+    def update_image(self):
+        # On supprime l'image affichée précédemment
+        self.canvas.delete(self.image_affichage)
+        #Si un serviteur est posé sur cette tuile, l'image de la tuile est l'image du serviteur
+        if self.serviteur != 0:
+            self.image = self.serviteur.image
+        #Sinon l'image est l'image du vide
+        else :
+            self.image = image_void
+        self.image_affichage = self.canvas.create_image(self.x, self.y, anchor=tk.NW, image=self.image)
+
+    def update_stats(self):
+        if self.atq_affichage != 0:
+            self.atq_affichage.destroy()
+        if self.serviteur != 0:
+            self.atq_affichage = tk.Label(self.canvas, text=self.serviteur.atq, font=("Calibri", 12), fg="blue", bg="wheat")
+            self.atq_affichage.place(x=self.x + 25, y=self.y + 166)
+        if self.hp_affichage != 0:
+            self.hp_affichage.destroy()
+        if self.serviteur != 0:
+            self.hp_affichage = tk.Label(self.canvas, text=self.serviteur.hp, font=("Calibri", 12), fg="red", bg="wheat")
+            self.hp_affichage.place(x=self.x + 130, y=self.y + 166)
+
+    def update(self):
+        self.update_bordure()
+        self.update_image()
+        self.update_stats()
+
+def affichage_texte_taverne_statique(Joueur):
+    Message_bienvenue = tk.Label(Joueur.canvas_taverne, text="Bienvenue dans la taverne!", font=("Calibri", 18),fg="red",bg='#c0c0c0')
+    Message_bienvenue.place(x=700, y=35)
+    Message_taverne = tk.Label(Joueur.canvas_taverne, text="Achetez ici vos serviteurs", font=("Calibri", 14),fg="black",bg='#c0c0c0')
+    Message_taverne.place(x=20, y=150)
+    Message_taverne_fleche = tk.Label(Joueur.canvas_taverne, text="--->", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_taverne_fleche.place(x=100, y=180)
+    Message_terrain1 = tk.Label(Joueur.canvas_taverne, text="Placez ici vos serviteurs", font=("Calibri", 14),fg="black",bg='#c0c0c0')
+    Message_terrain2 = tk.Label(Joueur.canvas_taverne, text="pour le combat", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_terrain_fleche = tk.Label(Joueur.canvas_taverne, text="--->", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_terrain1.place(x=20, y=480)
+    Message_terrain2.place(x=50, y=505)
+    Message_terrain_fleche.place(x=100, y=535)
+    Message_vente1 = tk.Label(Joueur.canvas_taverne, text="Vendez ici vos serviteurs", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_vente2 = tk.Label(Joueur.canvas_taverne, text="pour recuperer 1 gold", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_vente_fleche = tk.Label(Joueur.canvas_taverne, text="--->", font=("Calibri", 14), fg="black", bg='#c0c0c0')
+    Message_vente1.place(x=1140, y=480)
+    Message_vente2.place(x=1150, y=505)
+    Message_vente_fleche.place(x=1220, y=535)
+    Message_board1 = tk.Label(Joueur.canvas_taverne, text="Placez ici les serviteurs", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_board2 = tk.Label(Joueur.canvas_taverne, text="que vous achetez", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    Message_board_fleche = tk.Label(Joueur.canvas_taverne, text="<---", font=("Calibri", 14), fg="black", bg='#c0c0c0')
+    Message_board1.place(x=1270, y=740)
+    Message_board2.place(x=1290, y=765)
+    Message_board_fleche.place(x=1342, y=793)
+    message_rafraichir = tk.Label(Joueur.canvas_taverne, text="Refresh tavern", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    message_rafraichir.place(x=1070, y=272)
+    message_rafraichir_cout = tk.Label(Joueur.canvas_taverne, text="cost : 1 gold", font=("Calibri", 13), fg="black",bg='#c0c0c0')
+    message_rafraichir_cout.place(x=1085, y=297)
+    message_up_taverne = tk.Label(Joueur.canvas_taverne, text="Upgrade tavern", font=("Calibri", 14), fg="black",bg='#c0c0c0')
+    message_up_taverne.place(x=1070, y=142)
+    if Joueur == J2:
+        message_combat = tk.Label(Joueur.canvas_taverne, text="COMBAT", font=("Calibri", 15), fg="black", bg='#c0c0c0')
+        message_combat.place(x=1405, y=870)
+    if Joueur == J1:
+        message_combat = tk.Label(Joueur.canvas_taverne, text="Fin du tour", font=("Calibri", 15), fg="black", bg='#c0c0c0')
+        message_combat.place(x=1395, y=870)
+    nom_joueur = tk.Label(Joueur.canvas_taverne, text=" " + Joueur.nom + " ", font=("Calibri", 20), fg="red",bg='#c0c0c0', relief='solid', bd=2)
+    nom_joueur.place(x=1300, y=100)
+
+    # Créations de rectangles servant de boutons pour le menu taverne :
+    rectangle_ameliorer_taverne = Joueur.canvas_taverne.create_rectangle(910, 140, 1050, 200, outline='black', width=5)
+    rectangle_rafraichir_taverne = Joueur.canvas_taverne.create_rectangle(910, 270, 1050, 330, outline='black', width=5)
+    rectangle_vendre_serviteur = Joueur.canvas_taverne.create_rectangle(1380, 420, 1380 + 167, 420 + 260, outline='black', width=5)
+    rectangle_combat = Joueur.canvas_taverne.create_rectangle(1350, 910, 1550, 990, outline='black', width=5)
+
+def affichage_texte_taverne_dynamique(Joueur):
+    if Joueur.affichage_tier != 0:
+        Joueur.affichage_tier.destroy()
+        Joueur.affichage_gold.destroy()
+        Joueur.affichage_cout_upgrade_taverne.destroy()
+    Joueur.affichage_tier = tk.Label(Joueur.canvas_taverne, text="Your tavern tier  :  "+str(Joueur.taverne_tier), font=("Calibri", 18), fg="black", bg='#c0c0c0')
+    Joueur.affichage_tier.place(x=1300, y=190)
+    Joueur.affichage_gold = tk.Label(Joueur.canvas_taverne, text="Your gold  :  "+str(Joueur.gold), font=("Calibri", 18), fg="black", bg='#c0c0c0')
+    Joueur.affichage_gold.place(x=1300, y=220)
+    Joueur.affichage_tier = tk.Label(Joueur.canvas_taverne, text=str(Joueur.hp) + " / " + str(Joueur.hp_max) +  " hp", font=("Calibri", 18), fg="black", bg='#c0c0c0')
+    Joueur.affichage_tier.place(x=1300, y=145)
+    Joueur.affichage_cout_upgrade_taverne = tk.Label(Joueur.canvas_taverne, text="cost : "+ str(Joueur.prix_upgrade_taverne)+" gold", font=("Calibri", 13), fg="black", bg='#c0c0c0')
+    Joueur.affichage_cout_upgrade_taverne.place(x=1085, y=167)
+
+
+def affichage_combat():
+    global texte_lancer_combat
+    recantangle_lancer_combat = canvas_combat.create_rectangle(1380, 480, 1500, 550, outline='black', width=5)
+    texte_lancer_combat = tk.Label(canvas_combat, text="Cliquez ici pour lancer le combat", font=("Calibri", 14),fg="black",bg='#c0c0c0')
+    texte_lancer_combat.place(x=1300, y=450)
+
+def on_mouse_click(event,J1, J2):
     global lieu
-
+    if lieu == "taverne1":
+        player = J1
+    if lieu == "taverne2":
+        player = J2
+    debug = 0
     # Récupérer les coordonnées absolues de la souris
     abs_x, abs_y = event.widget.winfo_pointerxy()
     # Récupérer les coordonnées de la fenêtre Tkinter (obligatoire pour déplacer la fenêtre
@@ -222,380 +348,281 @@ def on_mouse_click(event):
     # Calculer les coordonnées relatives à la fenêtre Tkinter
     rel_x, rel_y = abs_x - fenetre_x, abs_y - fenetre_y
 
-    if lieu == "taverne":
-        #Pour changer la couleur du rectangle autour des cartes de la taverne
-        if 235 < rel_x < 235 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[0] != 0:
-          clic_sur_taverne(0)
-        if 445 < rel_x < 445 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[1] != 0:
-            clic_sur_taverne(1)
-        if 655 < rel_x < 655 + 167 and 100 < rel_y < 100 + 260 and emplacement_taverne_libre[2] != 0:
-            clic_sur_taverne(2)
-        #Pour le déplacement d'une carte de la taverne vers la main du joueur
-        if 25 < rel_x < 25 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[0] == 0:
-            clic_sur_board_vide(25, 720, 0)
-        if 235 < rel_x < 235 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[1] == 0:
-            clic_sur_board_vide(235, 720, 1)
-        if 445 < rel_x < 445 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[2] == 0:
-            clic_sur_board_vide(445, 720, 2)
-        if 655 < rel_x < 655 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[3] == 0:
-            clic_sur_board_vide(655, 720, 3)
-        if 865 < rel_x < 865 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[4] == 0:
-            clic_sur_board_vide(865, 720, 4)
-        if 1075 < rel_x < 1075 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[5] == 0:
-            clic_sur_board_vide(1075, 720, 5)
-        #Pour changer la couleur du rectangle autour des cartes du board
-        if 25 < rel_x < 25 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[0] != 0:
-            clic_sur_board_occupe(0)
-        if 235 < rel_x < 235 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[1] != 0:
-            clic_sur_board_occupe(1)
-        if 445 < rel_x < 445 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[2] != 0:
-            clic_sur_board_occupe(2)
-        if 655 < rel_x < 655 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[3] != 0:
-            clic_sur_board_occupe(3)
-        if 865 < rel_x < 865 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[4] != 0:
-            clic_sur_board_occupe(4)
-        if 1075 < rel_x < 1075 + 167 and 720 < rel_y < 720 + 260 and emplacement_board_libre[5] != 0:
-            clic_sur_board_occupe(5)
-        #Pour le déplacement d'une carte de la main du joueur vers le terrain
-        if 235 < rel_x < 235 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[0] == 0:
-            poser_un_serviteur(235, 420, 0)
-        if 445 < rel_x < 445 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[1] == 0:
-            poser_un_serviteur(445, 420, 1)
-        if 655 < rel_x < 655 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[2] == 0:
-            poser_un_serviteur(655, 420, 2)
-        if 865 < rel_x < 865 + 167 and 420 < rel_y < 420 + 260 and emplacement_terrain_libre[3] == 0:
-            poser_un_serviteur(865, 420, 3)
-        #Pour rafraichir la taverne :
-        if 960 < rel_x < 1100 and 180 < rel_y < 240:
-            refresh_taverne(Joueur)
-        #Pour vendre un serviteur :
+    if lieu == "taverne1" or lieu == "taverne2":
+
+        for i in range(4):
+            if player.Tiles_plateau[i].x < rel_x < player.Tiles_plateau[i].x + player.Tiles_plateau[i].largeur and player.Tiles_plateau[i].y < rel_y < player.Tiles_plateau[i].y + player.Tiles_plateau[i].longueur and player.Tiles_plateau[i].image != image_void:
+                echange_cartes_plateau(player, i)
+        for i in range(13):
+            if player.Tiles_total_taverne[i].x < rel_x < player.Tiles_total_taverne[i].x + player.Tiles_total_taverne[i].largeur and player.Tiles_total_taverne[i].y < rel_y < player.Tiles_total_taverne[i].y + player.Tiles_total_taverne[i].longueur and player.Tiles_total_taverne[i].image != image_void:
+                clic_sur_carte(player, i)
+        for i in range(6):
+            if player.Tiles_main[i].x < rel_x < player.Tiles_main[i].x + player.Tiles_main[i].largeur and player.Tiles_main[i].y < rel_y < player.Tiles_main[i].y + player.Tiles_main[i].longueur and player.Tiles_main[i].image == image_void:
+                clic_sur_main_vide(player, i)
+        for i in range(4):
+            if player.Tiles_plateau[i].x < rel_x < player.Tiles_plateau[i].x + player.Tiles_plateau[i].largeur and player.Tiles_plateau[i].y < rel_y < player.Tiles_plateau[i].y + player.Tiles_plateau[i].longueur and player.Tiles_plateau[i].image == image_void:
+                clic_sur_plateau_vide(player, i)
+        if 910 < rel_x < 1050 and 270 < rel_y < 330:
+            rafraichir_taverne(player)
+        if 910 < rel_x < 1050 and 140 < rel_y < 200:
+            ameliorer_taverne(player)
         if 1380 < rel_x < 1547 and 420 < rel_y < 680:
-            vendre_serviteur()
-        #Pour lancer le combat :
-        if 1350 < rel_x < 1550 and 910 < rel_y < 990:
-            lieu = "combat"
-            préparation_combat(Joueur, Adversaire)
+            vendre_serviteur(player)
+        if 1350 < rel_x < 1550 and 910 < rel_y < 960 and lieu == "taverne2":
+            preparation_combat(J1,J2)
+        if 1350 < rel_x < 1550 and 910 < rel_y < 960 and lieu == "taverne1":
+            switch_to_tavern(J1, J2, 2)
 
-    if lieu == "combat":
+    if lieu == "fin_combat":
         if 1380 < rel_x < 1500 and 480 < rel_y < 550:
-            Lancer_combat(Joueur,Adversaire)
-
-def clic_sur_taverne(colors_index):
-    global colors_taverne
-    if colors_taverne[colors_index] == 0:
-        colors_taverne = [0,0,0]
-        colors_taverne[colors_index] = 1
-    else:
-        colors_taverne[colors_index] = 0
-    for i in range (3):
-        if colors_taverne[i] == 0:
-            canvas.itemconfigure(border_taverne_liste[i], outline='black')
-        if colors_taverne[i] == 1:
-            canvas.itemconfigure(border_taverne_liste[i], outline='red')
-
-def clic_sur_board_vide(x,y, indice_board):
-    global colors_taverne, emplacement_taverne_libre, colors_board, Joueur, image_board
-    for indice_taverne in range(3):
-        if colors_taverne[indice_taverne] == 1:
-            if Joueur.gold >= 3:
-                canvas.delete(image_board[indice_board])
-                canvas.coords(image_taverne[indice_taverne], x, y)
-                image_board[indice_board] = image_taverne[indice_taverne]
-                image_taverne[indice_taverne] = canvas.create_image(235 + indice_taverne*210, 100, anchor=tk.NW, image=image_void)
-                colors_taverne[indice_taverne] = 0
-                canvas.itemconfigure(border_taverne_liste[indice_taverne], outline='black')
-                emplacement_board_libre[indice_board] = emplacement_taverne_libre[indice_taverne]
-                emplacement_taverne_libre[indice_taverne] = 0
-                colors_board[indice_board] = 1 #Il est necessaire de changer la couleur de la bordure vu l'ordre des évènements
-                Joueur.gold = Joueur.gold - 3
-                mise_a_jour_systeme_taverne()
-            else : print("You need to have 3 gold to buy a card")
+            retour_taverne(J1,J2)
+    if lieu == "combat":
+        if 1380 < rel_x < 1500 and 480 < rel_y < 550 and debug == 0:    # Tentative de mettre une entité debug qui empecherait le spam du bouton (mais ca ne marche pas) :/
+            debug = 1
+            canvas_combat.update()
+            lancer_combat(J1,J2)
 
 
-def poser_un_serviteur(x,y, indice_terrain):
-    global colors_board, emplacement_board_libre, colors_terrain
-    for indice_board in range(6):
-        if colors_board[indice_board] == 1:
-            canvas.delete(image_terrain[indice_terrain])
-            canvas.coords(image_board[indice_board], x, y)
-            image_terrain[indice_terrain] = image_board[indice_board]
-            image_board[indice_board] = canvas.create_image(25 + indice_board*210, 720, anchor=tk.NW, image=image_void)
-            colors_board[indice_board] = 0
-            canvas.itemconfigure(border_board_liste[indice_board], outline='black')
-            emplacement_terrain_libre[indice_terrain] = emplacement_board_libre[indice_board]
-            emplacement_board_libre[indice_board] = 0
-            colors_terrain[indice_terrain] = 1
-            mise_a_jour_systeme_taverne()
-
-
-def clic_sur_board_occupe(colors_index):
-    global colors_board
-    if colors_board[colors_index] == 0:
-        colors_board = [0,0,0,0,0,0]
-        colors_board[colors_index] = 1
-    else:
-        colors_board[colors_index] = 0
-    for i in range (6):
-        if colors_board[i] == 0:
-            canvas.itemconfigure(border_board_liste[i], outline='black')
-        if colors_board[i] == 1:
-            canvas.itemconfigure(border_board_liste[i], outline='red')
-
-def clic_sur_terrain_occupe(colors_index):
-    global colors_terrain, colors_board
-    if colors_board[colors_index] == 0:
-        colors_board = [0,0,0,0,0,0]
-        colors_board[colors_index] = 1
-    else:
-        colors_board[colors_index] = 0
-    for i in range (6):
-        if colors_board[i] == 0:
-            canvas.itemconfigure(border_board_liste[i], outline='black')
-        if colors_board[i] == 1:
-            canvas.itemconfigure(border_board_liste[i], outline='red')
-
-
-def remplissage_taverne(tier):
-    global Liste_serviteurs, emplacement_taverne_libre
+def remplissage_taverne(player,tier):
     nb_cartes = len(Liste_tier[tier-1])
     for i in range(3):
         nb_aléatoire = rd.randint(0, nb_cartes-1)
-        id_serviteur = len(Liste_serviteurs)
-        Liste_serviteurs = Liste_serviteurs + [0]
 
-        if nb_aléatoire == 0:
-            Liste_serviteurs[id_serviteur] = Murloc_type_1(id_serviteur)
-        if nb_aléatoire == 1:
-            Liste_serviteurs[id_serviteur] = Murloc_type_2(id_serviteur)
-        if nb_aléatoire == 2:
-            Liste_serviteurs[id_serviteur] = Paladin_type_1(id_serviteur)
-        if nb_aléatoire == 3:
-            Liste_serviteurs[id_serviteur] = Bete_type_1(id_serviteur)
-        if nb_aléatoire == 4:
-            Liste_serviteurs[id_serviteur] = Murloc_type_3(id_serviteur)
-        if nb_aléatoire == 5:
-            Liste_serviteurs[id_serviteur] = Murloc_type_4(id_serviteur)
+        player.Tiles_taverne[i].serviteur = Liste_tier[tier-1][nb_aléatoire]()
+        player.Tiles_taverne[i].update()
 
-        image_taverne[i] = canvas.create_image(235 + i*210, 100, anchor=tk.NW, image=Liste_serviteurs[id_serviteur].image)
-        emplacement_taverne_libre[i] = Liste_serviteurs[id_serviteur]
-        mise_a_jour_systeme_taverne()
-
-
-
-def initialisation_board_et_terrain():
-    for i in range (6):
-        image_board[i] = canvas.create_image(25 + 210 * i, 720, anchor=tk.NW, image=image_void)
-    for i in range(4):
-        image_terrain[i] = canvas.create_image(235 + 210 * i, 420, anchor=tk.NW, image=image_void)
-
-
-
-label_liste_taverne = [0,0,0,0,0,0] # Les 3 premiers carractères sont les points d'attaque des 3 serviteurs placés dans la taverne, les 3 suivants sont leur point de vie
-label_liste_board = [0,0,0,0,0,0,0,0,0,0,0,0] #Idem que précédemment mais il y a 6 serviteurs donc 12 carractères
-label_liste_terrain = [0,0,0,0,0,0,0,0]
-def mise_a_jour_systeme_taverne():
-    global label_liste_taverne,label_liste_board, gold_joueur
-    #On détruit d'abord les pv/points d'attaque affichés précemment
-    for i in range(6):
-        if label_liste_taverne[i] != 0:
-            label_liste_taverne[i].destroy()
-            label_liste_taverne[i] = 0
-    for i in range(12):
-        if label_liste_board[i] != 0:
-            label_liste_board[i].destroy()
-            label_liste_board[i] = 0
-    for i in range(8):
-        if label_liste_terrain[i] != 0:
-            label_liste_terrain[i].destroy()
-            label_liste_terrain[i] = 0
-
-    #On affiche les nouveaux points d'attaque et points de vie
-    for i in range(3):
-        if emplacement_taverne_libre[i] != 0:
-            label_liste_taverne[i] = tk.Label(fenetre, text=emplacement_taverne_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_liste_taverne[i].place(x=260 + i * 210, y=266)
-            label_liste_taverne[i+3] = tk.Label(fenetre, text=emplacement_taverne_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_liste_taverne[i+3].place(x=365 +i*210, y=266)
-
-    for i in range(6):
-        if emplacement_board_libre[i] != 0:
-            label_liste_board[i] = tk.Label(fenetre, text=emplacement_board_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_liste_board[i].place(x=50 + i * 210, y=886)
-            label_liste_board[i+6] = tk.Label(fenetre, text=emplacement_board_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_liste_board[i+6].place(x=155 + i * 210, y=886)
-
-    for i in range(4):
-        if emplacement_terrain_libre[i] != 0:
-            label_liste_terrain[i] = tk.Label(fenetre, text=emplacement_terrain_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_liste_terrain[i].place(x=260 + i * 210, y=586)
-            label_liste_terrain[i+4] = tk.Label(fenetre, text=emplacement_terrain_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_liste_terrain[i+4].place(x=365 + i * 210, y=586)
-
-    gold_joueur.destroy()
-    gold_joueur = tk.Label(fenetre, text=Joueur.gold, font=("Calibri", 18), fg="black", bg='#c0c0c0')
-    gold_joueur.place(x=1420, y=190)
-
-
-
-def mise_a_jour_systeme_combat(p1,p2):
-    global label_combat_liste, label_opposant_liste
-    #On détruit d'abord les pv/points d'attaque affichés précemment
-    for i in range(8):
-        if label_combat_liste[i] != 0:
-            label_combat_liste[i].destroy()
-            label_combat_liste[i] = 0
-        if label_opposant_liste[i] != 0:
-            label_opposant_liste[i].destroy()
-            label_opposant_liste[i] = 0
-
-
-    #On affiche les nouveaux points d'attaque et points de vie
-    for i in range(4):
-        if p1.serviteurs_au_combat[i] != 0:
-            label_combat_liste[i] = tk.Label(fenetre, text=p1.serviteurs_au_combat[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_combat_liste[i].place(x=260 + i * 210, y=866)
-            label_combat_liste[i+4] = tk.Label(fenetre, text=p1.serviteurs_au_combat[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_combat_liste[i+4].place(x=365 +i*210, y=866)
-        if p2.serviteurs_au_combat[i] != 0:
-            label_combat_liste[i] = tk.Label(fenetre, text=p2.serviteurs_au_combat[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_combat_liste[i].place(x=260 + i * 210, y=286)
-            label_combat_liste[i+4] = tk.Label(fenetre, text=p2.serviteurs_au_combat[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_combat_liste[i+4].place(x=365 +i*210, y=286)
-
-
-
-
-def refresh_taverne(Joueur):
-    if Joueur.gold >= 1:
+def rafraichir_taverne(player):
+    if player.gold >= 1:
         for i in range(3):
-            canvas.delete(image_taverne[i])
-        Joueur.gold = Joueur.gold - 1
-        remplissage_taverne(Joueur.taverne_tier)
+            player.Tiles_taverne[i].serviteur = 0
+        player.gold -= 1
+        affichage_texte_taverne_dynamique(player)
+        remplissage_taverne(player, player.taverne_tier)
+    else :
+        print("You need 1 gold to refresh tavern")
+
+def vendre_serviteur(player):
+    for i in range(3,13):
+        if player.Tiles_total_taverne[i].color == "red":
+            player.Tiles_total_taverne[i].color = "black"
+            player.Tiles_total_taverne[i].serviteur = 0
+            player.Tiles_total_taverne[i].update()
+            player.gold += 1
+            if player.gold > 10:
+                player.gold = 10
+            affichage_texte_taverne_dynamique(player)
+
+def ameliorer_taverne(player):
+    if player.taverne_tier != 4:
+        if player.gold >= player.prix_upgrade_taverne:
+            player.taverne_tier += 1
+            player.gold -= player.prix_upgrade_taverne
+            player.prix_upgrade_taverne = 5
+            affichage_texte_taverne_dynamique(player)
+        else :
+            print("You need", player.prix_upgrade_taverne, "gold to upgrade tavern")
+    if player.taverne_tier == 4:
+        print("You are already max tier")
+
+def clic_sur_carte(player, indice):
+    a = "black"
+    if player.Tiles_total_taverne[indice].color == "black":
+        a = "red"
+    for i in range(13):
+        player.Tiles_total_taverne[i].color = "black"
+        player.Tiles_total_taverne[i].update()
+    player.Tiles_total_taverne[indice].color = a
+    player.Tiles_total_taverne[indice].update()
+
+def clic_sur_main_vide(player, indice):
+    for i in range(3):
+        if player.Tiles_taverne[i].color == "red":
+            if player.gold >= 3:
+                player.Tiles_taverne[i].color = "black"
+                player.Tiles_main[indice].serviteur = player.Tiles_taverne[i].serviteur
+                player.Tiles_taverne[i].serviteur = 0
+                player.Tiles_main[indice].update()
+                player.Tiles_taverne[i].update()
+                player.gold -= 3
+                affichage_texte_taverne_dynamique(player)
 
 
-def vendre_serviteur():
-    global Joueur, image_board, colors_board
+            else : print("You need to have 3 gold to buy a card")
+
+def clic_sur_plateau_vide(player, indice):
     for i in range(6):
-        if colors_board[i] == 1:
-            colors_board[i] = 0
-            image_board[i] = canvas.create_image(25 + i*210, 720, anchor=tk.NW, image=image_void)
-            canvas.itemconfigure(border_board_liste[i], outline='black')
-            emplacement_board_libre[i] = 0
-            Joueur.gold += 1
-    mise_a_jour_systeme_taverne()
+        if player.Tiles_main[i].color == "red":
+            player.Tiles_main[i].color = "black"
+            player.Tiles_plateau[indice].serviteur = player.Tiles_main[i].serviteur
+            player.Tiles_main[i].serviteur = 0
+            player.Tiles_plateau[indice].update()
+            player.Tiles_main[i].update()
+            if player.Tiles_plateau[indice].serviteur.cris_de_guerre != None:
+                Cris_de_guerre(player, player.Tiles_plateau[indice].serviteur.cris_de_guerre[0],player.Tiles_plateau[indice].serviteur.cris_de_guerre[1])
+            check_if_apparition(player, player.Tiles_plateau[indice].serviteur, indice)
 
 
-#Création des 4 adversaires :
-liste_opposants = [0,0,0,0]
-for i in range(4):
-    liste_opposants[i] = Murloc_type_4(i+1000)
+def check_if_apparition(player, nouveau_serviteur, indice):
+    for i in range(4):
+        if player.Tiles_plateau[i].serviteur != 0:
+            if player.Tiles_plateau[i].serviteur.apparition != None and i != indice:
+                Apparition(player, nouveau_serviteur.tribe, player.Tiles_plateau[i].serviteur.apparition[0], player.Tiles_plateau[i].serviteur.apparition[1])
 
 
-def Bataille1(Joueur1,Joueur2):
-    #while (Joueur1.serviteurs_au_combat != [0,0,0,0] and Joueur2.serviteurs_au_combat != [0,0,0,0]):
-        while (Joueur1.serviteurs_au_combat[Joueur1.next_battler] == 0):      # Boucle pour trouver un serviteur du joueur 1
-            Joueur1.next_battler += 1
-            if (Joueur1.next_battler == 4):
-                Joueur1.next_battler = 0
+def echange_cartes_plateau(player, indice):
+    for i in range(4):
+        if i != indice:
+            if player.Tiles_plateau[i].color == "red":
+                player.Tiles_plateau[i].color = "black"
+                player.Tiles_plateau[indice].color = "red" # Necessaire a cause de l'enchainement de conditions dans la fonction "on_mouse_click", sinon la bordure était de couleur noire
+                temporaire = player.Tiles_plateau[indice].serviteur
+                player.Tiles_plateau[indice].serviteur = player.Tiles_plateau[i].serviteur
+                player.Tiles_plateau[i].serviteur = temporaire
+                player.Tiles_plateau[indice].update()
+                player.Tiles_plateau[i].update()
 
+def preparation_combat(p1,p2):
+    global lieu
+    lieu = "combat"
+    p2.canvas_taverne.grid_remove()
+    canvas_combat.grid()
+    affichage_combat()
+    p1.initialisation_combat(1, p1.Tiles_plateau)
+    p2.initialisation_combat(2, p2.Tiles_plateau)
+
+def Bataille(p1,p2, next_attacker):
+    while (p1.Tiles_combat[p1.next_battler].serviteur == 0):  # Boucle pour trouver un serviteur du joueur 1
+        p1.next_battler += 1
+        if (p1.next_battler == 4):
+            p1.next_battler = 0
+
+    target = rd.randint(0, 3)
+    while (p2.Tiles_combat[target].serviteur == 0):  # Boucle pour trouver une cible : un serviteur du joueur 2
         target = rd.randint(0, 3)
-        while (Joueur2.serviteurs_au_combat[target] == 0):           # Boucle pour trouver une cible : un serviteur du joueur 2
-            target = rd.randint(0, 3)
 
-        a = Joueur1.serviteurs_au_combat[Joueur1.next_battler].attaquer(Joueur2.serviteurs_au_combat[target])
-
-        return a,target
-
-
-def Bataille2(Joueur1, Joueur2, a, target):
+    a = p1.Tiles_combat[p1.next_battler].serviteur.attaquer(p2.Tiles_combat[target].serviteur)
+    if next_attacker == 1:
+        p1.Tiles_combat[p1.next_battler].y -= 100
+    if next_attacker == 2:
+        p1.Tiles_combat[p1.next_battler].y += 100
+    p1.Tiles_combat[p1.next_battler].update()
+    p2.Tiles_combat[target].update()
+    canvas_combat.update()
+    time.sleep(1)
+    if next_attacker == 1:
+        p1.Tiles_combat[p1.next_battler].y += 100
+    if next_attacker == 2:
+        p1.Tiles_combat[p1.next_battler].y -= 100
+    p1.Tiles_combat[p1.next_battler].update()
     if (a == 1 or a == 3):
-        Joueur1.serviteurs_au_combat[Joueur1.next_battler] = 0
+        p1.Tiles_combat[p1.next_battler].serviteur = 0
+        p1.Tiles_combat[p1.next_battler].update()
     if (a == 2 or a == 3):
-        Joueur2.serviteurs_au_combat[target] = 0
-    Joueur1.next_battler += 1
-    if (Joueur1.next_battler == 4):
-        Joueur1.next_battler = 0
+        p2.Tiles_combat[target].serviteur = 0
+        p2.Tiles_combat[target].update()
+    p1.next_battler += 1
+    if (p1.next_battler == 4):
+        p1.next_battler = 0
+    canvas_combat.update()
+    time.sleep(1)
 
-
-def Lancer_combat(Joueur1,Joueur2):
+def lancer_combat(p1,p2):
+    global lieu, texte_lancer_combat
     next_attacker = rd.randint(1,2)     #Défini si c'est le joueur 1 qui commence à attaquer ou si c'est le 2ème. De plus, cette variable sera mise à jour à chaque attaque.
-    while (Joueur1.serviteurs_au_combat != [0,0,0,0] and Joueur2.serviteurs_au_combat != [0,0,0,0]):
+    while (p1.Tiles_combat[0].serviteur != 0 or p1.Tiles_combat[1].serviteur != 0 or p1.Tiles_combat[2].serviteur != 0 or p1.Tiles_combat[3].serviteur != 0) and (p2.Tiles_combat[0].serviteur != 0 or p2.Tiles_combat[1].serviteur != 0 or p2.Tiles_combat[2].serviteur != 0 or p2.Tiles_combat[3].serviteur != 0):
         if (next_attacker == 1):
-            a,target = Bataille1(Joueur1,Joueur2)
-            time.sleep(1)
-            mise_a_jour_systeme_combat(Joueur1, Joueur2)
-            canvas_combat.update()
-            Bataille2(Joueur1,Joueur2,a,target)
+            Bataille(p1,p2, next_attacker)
             next_attacker = 2
         else :
-            a, target = Bataille1(Joueur2,Joueur1)
-            time.sleep(1)
-            mise_a_jour_systeme_combat(Joueur1, Joueur2)
-            canvas_combat.update()
-            Bataille2(Joueur2, Joueur1, a, target)
+            Bataille(p2, p1, next_attacker)
             next_attacker = 1
+    lieu = "fin_combat"
+    p1.degat_subis(p2)
+    p2.degat_subis(p1)
+    #Affichage de texte :
+    texte_lancer_combat.destroy()
+    texte_lancer_combat = tk.Label(canvas_combat, text="Cliquez ici pour rentrer à la taverne", font=("Calibri", 14), fg="black", bg='#c0c0c0')
+    texte_lancer_combat.place(x=1295, y=450)
 
-    print("fin du combat")
-
-
-
-image_combat = [0, 0, 0, 0]
-label_combat_liste = [0,0,0,0,0,0,0,0]
-image_opposant = [0,0,0,0]
-label_opposant_liste = [0,0,0,0,0,0,0,0]
-
-def préparation_combat(p1,p2):
-    global emplacement_terrain_libre, liste_opposants, image_combat, label_combat_liste, image_opposant, label_opposant_liste
-
-    canvas_combat = tk.Canvas(fenetre, width=1600, height=1000)
-    canvas_combat.configure(bg='#c0c0c0')
-    canvas.grid_remove()
-    canvas_combat.grid()
+def retour_taverne(p1,p2):
+    global lieu, Nombre_combats, texte_lancer_combat
+    Nombre_combats += 1
+    lieu = "taverne1"
+    canvas_combat.grid_remove()
+    p1.canvas_taverne.grid()
+    p1.mise_a_jour_fin_combat()
+    p2.mise_a_jour_fin_combat()
+    #On supprime les éléments du canvas de combat :
     for i in range(4):
-        if emplacement_terrain_libre[i] != 0:
-            image_combat[i] = canvas_combat.create_image(235 + i * 210, 700, anchor=tk.NW, image=emplacement_terrain_libre[i].image)
-            label_combat_liste[i] = tk.Label(fenetre, text=emplacement_terrain_libre[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-            label_combat_liste[i].place(x=260 + i * 210, y=866)
-            label_combat_liste[i + 3] = tk.Label(fenetre, text=emplacement_terrain_libre[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-            label_combat_liste[i + 3].place(x=365 + i * 210, y=866)
-        if emplacement_terrain_libre[i] == 0:
-            image_combat[i] = canvas_combat.create_image(235 + i * 210, 700, anchor=tk.NW, image=image_void)
-
-        #Affichage des adversaires :
-        image_opposant[i] = canvas_combat.create_image(235 + i * 210, 120, anchor=tk.NW, image=liste_opposants[i].image)
-        label_opposant_liste[i] = tk.Label(fenetre, text=liste_opposants[i].atq, font=("Calibri", 12), fg="blue", bg="wheat")
-        label_opposant_liste[i].place(x=260 + i * 210, y=286)
-        label_opposant_liste[i + 3] = tk.Label(fenetre, text=liste_opposants[i].pv, font=("Calibri", 12), fg="red", bg="wheat")
-        label_opposant_liste[i + 3].place(x=365 + i * 210, y=286)
-
-    #Autre affichage :
-    border_lancer_combat = canvas_combat.create_rectangle(1380, 480, 1500, 550, outline='black', width=5)
-
-    #Copie des unités pour le combat
-    p1.serviteurs_au_combat = emplacement_terrain_libre
-    p2.serviteurs_au_combat = liste_opposants
+        p1.Tiles_combat[i].serviteur = 0
+        p2.Tiles_combat[i].serviteur = 0
+        p1.Tiles_combat[i].update()
+        p2.Tiles_combat[i].update()
+    texte_lancer_combat.destroy()
+    canvas_combat.delete("all")
 
 
+def switch_to_tavern(p1, p2, indice):
+    global lieu, Nombre_combats
+    lieu = "taverne"+str(indice)
+    p1.canvas_taverne.grid_remove()
+    p2.canvas_taverne.grid()
+    affichage_texte_taverne_dynamique(p2)
+    # On remplis la taverne si c'est le 1er tour de jeu :
+    if Nombre_combats == 0:
+        rafraichir_taverne(p2)
+
+#Bonus
+def Cris_de_guerre(player, id_cris_de_guerre, option):
+    if id_cris_de_guerre == 0:
+        succes = 0
+        for i in range(4):
+            if player.Tiles_plateau[i].serviteur == 0 and succes == 0:
+                player.Tiles_plateau[i].serviteur = Liste_cartes_tier4[option]()
+                player.Tiles_plateau[i].update()
+                succes = 1
+                check_if_apparition(player, player.Tiles_plateau[i].serviteur, i)
+                return(0)
+        print("le plateau est plein")
+
+def Apparition(player, tribe, id_apparition, option):
+    if id_apparition == 0:
+        if tribe == "Murloc":
+            target = rd.randint(0,3)
+            while player.Tiles_plateau[target].serviteur == 0:
+                target = rd.randint(0, 3)
+            while player.Tiles_plateau[target].serviteur.tribe != "Murloc":
+                target = rd.randint(0,3)
+                while player.Tiles_plateau[target].serviteur == 0:
+                    target = rd.randint(0, 3)
+            player.Tiles_plateau[target].serviteur.atq += option[0]
+            player.Tiles_plateau[target].serviteur.hp += option[1]
+            player.Tiles_plateau[target].update()
 
 
 
 
-
-#Programme
-
-
-
-
-initialisation_board_et_terrain()
-remplissage_taverne(1)
-
-
+nom = input("Entrez votre nom (Max 15 caractères) : ")
+while not 0 < len(nom) <= 15:
+    if len(nom) == 0:
+        print("Veuillez mettre un caractère au minimum")
+    if len(nom) > 15:
+        print("15 caractères maximum!")
+    nom = input("Entrez votre nom (Max 15 caractères) : ")
+print ("(Ouvrez la fenêtre)")
 
 
+# Paramètres du joueur
+J1 = Player(nom, canvas_taverne1)
+J2 = Player("Ennemy", canvas_taverne2)
 
 
-fenetre.bind("<Button-1>", on_mouse_click)
+rafraichir_taverne(J1)
+affichage_texte_taverne_statique(J1)
+affichage_texte_taverne_statique(J2)
+affichage_texte_taverne_dynamique(J1)
+
+
+fenetre.bind("<Button-1>", lambda event: on_mouse_click(event, J1, J2))
+
 fenetre.mainloop()
-
-
-

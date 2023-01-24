@@ -37,3 +37,4 @@ nb :
 
 Bugs :
 - Si on spam le bouton "lancer combat" dans le menu combat, le combat se lance plusieurs fois ce qui fait bug le jeu.
+- Lorsque l'on atteint le niveau maximum de la taverne, le texte d'amélioration de la taverne reste affiché alors que l'on ne peut plus améliorer la taverne.

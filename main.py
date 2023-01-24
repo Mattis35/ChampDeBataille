@@ -400,9 +400,9 @@ def on_mouse_click(event,J1, J2):
 def remplissage_taverne(player,tier):
     nb_cartes = len(Liste_tier[tier-1])
     for i in range(3):
-        nb_aléatoire = rd.randint(0, nb_cartes-1)
+        nb_aleatoire = rd.randint(0, nb_cartes-1)
 
-        player.Tiles_taverne[i].serviteur = Liste_tier[tier-1][nb_aléatoire]()
+        player.Tiles_taverne[i].serviteur = Liste_tier[tier-1][nb_aleatoire]()
         player.Tiles_taverne[i].update()
 
 def rafraichir_taverne(player):

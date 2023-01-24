@@ -39,7 +39,7 @@ class Player:
         self.nom = nom
         self.hp = 20
         self.hp_max = 20
-        self.gold = 4       # Le joueur commence avec 4 gold car on remplis automatiquement sa taverne avant qu'il ne commence à jouer ce qui coute 1 gold, il n'a donc que 3 gold au démarrage
+        self.gold = 3       # Le joueur commence avec 4 gold car on remplis automatiquement sa taverne avant qu'il ne commence à jouer ce qui coute 1 gold, il n'a donc que 3 gold au démarrage
         self.taverne_tier = 1
         self.prix_upgrade_taverne = 5
         self.next_battler = 0

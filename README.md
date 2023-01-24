@@ -33,3 +33,4 @@ nb :
 - La capacité Cris de guerre s'active lorsque l'on place le serviteur
 - La capacité apparition fonctionne
 - le bouclier divin n'a pas été fait, la carte n'a donc pas d'effet particulier 
+- J'ai réalisé les cartes mais les images ont été faites par l'ia "Midjourney"

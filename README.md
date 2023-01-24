@@ -18,7 +18,7 @@ Il existe 4 niveaux de taverne avec :
 - 4 serviteurs au niveau 1
 - 1 serviteur au niveau 2
 - 1 serviteur au niveau 3
-- 0 serviteur au niveau 4
+- 1 serviteur au niveau 4
 
 
 Après avoir terminé son tour avec le joueur 1, il faut appuyer sur le boutton "fin du tour" en bas a droite, on joue alors le joueur 2 appelé "ennemy".

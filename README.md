@@ -34,3 +34,6 @@ nb :
 - La capacité apparition fonctionne
 - le bouclier divin n'a pas été fait, la carte n'a donc pas d'effet particulier 
 - J'ai réalisé les cartes mais les images ont été faites par l'ia "Midjourney"
+
+Bugs :
+- Si on spam le bouton "lancer combat" dans le menu combat, le combat se lance plusieurs fois ce qui fait bug le jeu.

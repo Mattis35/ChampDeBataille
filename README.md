@@ -1,6 +1,6 @@
 # ChampDeBataille
 
-Dans cet auto-battler, on incarne 2 joueurs à tour de role qui doivent acheter des serviteurs et les améliorer pour les faire combattre. A la fin du combat, le joueur qui n'a plus de serviteurs subis des degats en fonction des serviteurs restants à sont opposant (1 degat par tier par serviteur restant)
+Dans cet auto-battler, on incarne 2 joueurs à tour de role qui doivent acheter des serviteurs et les améliorer pour les faire combattre. A la fin du combat, le joueur qui n'a plus de serviteurs subit des degats en fonction des serviteurs restants à sont opposant (1 degat par tier par serviteur restant)
 ex : il reste 1 serviteur de tier 3 et 1 serviteur de tier 2, le joueur subis 5 degats.
 
 
